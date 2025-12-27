@@ -7,8 +7,20 @@ import tempfile
 import httpx
 import json
 import shutil
+import asyncio
 from pathlib import Path
 from datetime import datetime
+from asyncio.proactor_events import _ProactorBasePipeTransport
+
+# 修复 Windows 下 asyncio 的 ConnectionResetError [WinError 10054]
+# 这通常发生在客户端强制关闭连接时，ProactorEventLoop 会抛出此异常
+if sys.platform == 'win32':
+    _backup_call_connection_lost = _ProactorBasePipeTransport._call_connection_lost
+    def _patched_call_connection_lost(self, exc):
+        if isinstance(exc, ConnectionResetError):
+            return
+        _backup_call_connection_lost(self, exc)
+    _ProactorBasePipeTransport._call_connection_lost = _patched_call_connection_lost
 
 # 添加项目根目录到路径
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -515,22 +527,17 @@ def select_folder():
     """打开文件夹选择对话框"""
     try:
         import subprocess
-        import sys
         
-        # 使用子进程运行 tkinter 对话框
-        code = '''
-import tkinter as tk
-from tkinter import filedialog
-import sys
-
-root = tk.Tk()
-root.withdraw()
-root.attributes('-topmost', True)
-path = filedialog.askdirectory()
-# 使用特殊标记包裹路径，以便从输出中提取，避免混入启动日志
-if path:
-    print(f"__RESULT__:{path}")
-'''
+        # 使用 PowerShell 脚本打开文件夹选择对话框，避免打包后 tkinter 失效的问题
+        ps_script = """
+        Add-Type -AssemblyName System.Windows.Forms
+        $f = New-Object System.Windows.Forms.FolderBrowserDialog
+        $f.Description = "选择文件夹"
+        $f.ShowNewFolderButton = $true
+        if ($f.ShowDialog() -eq "OK") {
+            Write-Host "__RESULT__:$($f.SelectedPath)"
+        }
+        """
         
         # Windows下隐藏控制台窗口
         startupinfo = None
@@ -539,11 +546,10 @@ if path:
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             
         result = subprocess.run(
-            [sys.executable, "-c", code], 
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script], 
             capture_output=True, 
-            text=True, # 使用文本模式
+            text=True,
             encoding='utf-8',
-            errors='replace',
             startupinfo=startupinfo,
             timeout=60
         )
@@ -567,32 +573,18 @@ def select_file(title: str = "选择文件", filetypes: str = "所有文件 (*.*
     """打开文件选择对话框"""
     try:
         import subprocess
-        import sys
         
-        # 解析文件类型
-        # 格式: "JSON文件 (*.json)|*.json|所有文件 (*.*)|*.*"
-        ft_list = []
-        for ft in filetypes.split('|'):
-            if '(' in ft and '*' in ft:
-                label = ft.split('(')[0].strip()
-                ext = ft.split('(')[1].split(')')[0].strip()
-                ft_list.append((label, ext))
-        
-        ft_str = str(ft_list) if ft_list else "[('所有文件', '*.*')]"
-        
-        # 使用子进程运行 tkinter 对话框
-        code = f'''
-import tkinter as tk
-from tkinter import filedialog
-import sys
-
-root = tk.Tk()
-root.withdraw()
-root.attributes('-topmost', True)
-path = filedialog.askopenfilename(title="{title}", filetypes={ft_str})
-if path:
-    print(f"__RESULT__:{{path}}")
-'''
+        # 使用 PowerShell 脚本打开文件选择对话框
+        # filetypes 格式: "JSON文件 (*.json)|*.json|所有文件 (*.*)|*.*"
+        ps_script = f"""
+        Add-Type -AssemblyName System.Windows.Forms
+        $f = New-Object System.Windows.Forms.OpenFileDialog
+        $f.Title = "{title}"
+        $f.Filter = "{filetypes}"
+        if ($f.ShowDialog() -eq "OK") {{
+            Write-Host "__RESULT__:$($f.FileName)"
+        }}
+        """
         
         # Windows下隐藏控制台窗口
         startupinfo = None
@@ -601,11 +593,10 @@ if path:
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             
         result = subprocess.run(
-            [sys.executable, "-c", code], 
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script], 
             capture_output=True, 
             text=True,
             encoding='utf-8',
-            errors='replace',
             startupinfo=startupinfo,
             timeout=60
         )
