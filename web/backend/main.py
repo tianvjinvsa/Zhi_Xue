@@ -527,9 +527,9 @@ root = tk.Tk()
 root.withdraw()
 root.attributes('-topmost', True)
 path = filedialog.askdirectory()
-# 使用 utf-8 强制输出，避免 Windows 默认编码问题
+# 使用特殊标记包裹路径，以便从输出中提取，避免混入启动日志
 if path:
-    sys.stdout.buffer.write(path.encode('utf-8'))
+    print(f"__RESULT__:{path}")
 '''
         
         # Windows下隐藏控制台窗口
@@ -541,16 +541,19 @@ if path:
         result = subprocess.run(
             [sys.executable, "-c", code], 
             capture_output=True, 
-            text=False, # 不使用自动文本解码，手动处理
+            text=True, # 使用文本模式
+            encoding='utf-8',
+            errors='replace',
             startupinfo=startupinfo,
             timeout=60
         )
         
-        # 手动解码，优先使用 utf-8
-        try:
-            path = result.stdout.decode('utf-8').strip()
-        except UnicodeDecodeError:
-            path = result.stdout.decode('gbk', errors='replace').strip()
+        # 从输出中提取路径
+        path = ""
+        for line in result.stdout.splitlines():
+            if line.startswith("__RESULT__:"):
+                path = line.replace("__RESULT__:", "").strip()
+                break
             
         return {"path": path}
     except subprocess.TimeoutExpired:
@@ -588,7 +591,7 @@ root.withdraw()
 root.attributes('-topmost', True)
 path = filedialog.askopenfilename(title="{title}", filetypes={ft_str})
 if path:
-    sys.stdout.buffer.write(path.encode('utf-8'))
+    print(f"__RESULT__:{{path}}")
 '''
         
         # Windows下隐藏控制台窗口
@@ -600,15 +603,19 @@ if path:
         result = subprocess.run(
             [sys.executable, "-c", code], 
             capture_output=True, 
-            text=False,
+            text=True,
+            encoding='utf-8',
+            errors='replace',
             startupinfo=startupinfo,
             timeout=60
         )
         
-        try:
-            path = result.stdout.decode('utf-8').strip()
-        except UnicodeDecodeError:
-            path = result.stdout.decode('gbk', errors='replace').strip()
+        # 从输出中提取路径
+        path = ""
+        for line in result.stdout.splitlines():
+            if line.startswith("__RESULT__:"):
+                path = line.replace("__RESULT__:", "").strip()
+                break
             
         return {"path": path}
     except subprocess.TimeoutExpired:
@@ -1011,8 +1018,6 @@ def import_data(data: ImportRequest):
                 # 获取当前收藏列表
                 current_favs = favorite_service.get_all_favorites()
                 current_ids = {f.question_id for f in current_favs}
-                
-                from models.question import Question
                 
                 count = 0
                 for fav_dict in fav_data:

@@ -177,6 +177,10 @@ def start_dev_server():
 
 def main():
     """主入口"""
+    # 如果是作为子进程运行命令（如 select-folder），则不启动服务器
+    if len(sys.argv) > 1 and sys.argv[1] == "-c":
+        return
+
     # 打包后强制使用生产模式
     if IS_FROZEN:
         start_production_server()
