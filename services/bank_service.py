@@ -166,6 +166,28 @@ class BankService:
                 self._save_meta(meta)
             return True
         return False
+
+    def batch_add_questions(self, bank_id: str, questions: List[Question]) -> int:
+        """批量向题库添加题目"""
+        bank = self.get_bank(bank_id)
+        if not bank:
+            return 0
+        
+        added_count = 0
+        for question in questions:
+            if bank.add_question(question):
+                added_count += 1
+        
+        if added_count > 0:
+            self._save_bank(bank)
+            # 更新元数据
+            meta = self._load_meta()
+            if bank_id in meta:
+                meta[bank_id]['question_count'] = len(bank.questions)
+                meta[bank_id]['updated_at'] = bank.updated_at
+                self._save_meta(meta)
+        
+        return added_count
     
     def update_question_in_bank(self, bank_id: str, question: Question) -> bool:
         """更新题库中的题目"""

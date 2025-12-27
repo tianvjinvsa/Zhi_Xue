@@ -52,7 +52,7 @@ class FavoriteService:
         except Exception as e:
             print(f"保存收藏数据失败: {e}")
     
-    def add_favorite(self, question: Question, bank_id: str, bank_name: str) -> Tuple[bool, str]:
+    def add_favorite(self, question: Question, bank_id: str, bank_name: str, note: str = "") -> Tuple[bool, str]:
         """
         添加收藏
         返回: (是否成功, 消息)
@@ -70,7 +70,8 @@ class FavoriteService:
             answer=question.answer,
             explanation=question.explanation,
             difficulty=question.difficulty,
-            tags=question.tags.copy() if question.tags else []
+            tags=question.tags.copy() if question.tags else [],
+            note=note
         )
         
         if self._collection.add_favorite(fav):

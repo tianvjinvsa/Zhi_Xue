@@ -1,107 +1,153 @@
 <template>
   <div class="paper-view">
     <div class="page-header">
-      <h1><el-icon><Document /></el-icon>试卷管理</h1>
-      <el-button type="primary" @click="$router.push('/papers/create')">
-        <el-icon><Plus /></el-icon>生成试卷
-      </el-button>
+      <div class="title-section">
+        <h1><el-icon><Document /></el-icon>试卷管理</h1>
+        <p class="subtitle">管理已生成的试卷，查看详情或开始练习</p>
+      </div>
+      <div class="header-actions">
+        <el-button type="primary" @click="$router.push('/papers/create')" class="create-btn">
+          <el-icon><Plus /></el-icon>生成新试卷
+        </el-button>
+      </div>
     </div>
 
-    <div class="card-container">
-      <el-table :data="papers" v-loading="loading" style="width: 100%">
-        <el-table-column prop="title" label="试卷名称" min-width="200" />
-        <el-table-column prop="question_count" label="题目数" width="100" align="center">
-          <template #default="{ row }">
-            <el-tag type="info">{{ row.question_count }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="total_score" label="总分" width="100" align="center">
-          <template #default="{ row }">
-            <span class="score-text">{{ row.total_score }} 分</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="time_limit" label="时限" width="100" align="center">
-          <template #default="{ row }">
-            <span>{{ row.time_limit ? `${row.time_limit} 分钟` : '不限时' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200" align="center">
-          <template #default="{ row }">
-            <div class="action-buttons">
-              <el-button type="primary" size="small" @click="previewPaper(row)">
-                预览
-              </el-button>
-              <el-button type="success" size="small" @click="startExam(row.id)">
-                开始答题
-              </el-button>
-              <el-popconfirm title="确定删除此试卷？" @confirm="deletePaper(row.id)">
-                <template #reference>
-                  <el-button type="danger" size="small">删除</el-button>
-                </template>
-              </el-popconfirm>
+    <div v-loading="loading" class="content-section">
+      <div v-if="papers.length > 0" class="papers-grid">
+        <el-card 
+          v-for="paper in papers" 
+          :key="paper.id" 
+          class="paper-card" 
+          shadow="hover"
+        >
+          <div class="paper-card-header">
+            <div class="paper-icon">
+              <el-icon><Files /></el-icon>
             </div>
-          </template>
-        </el-table-column>
-      </el-table>
+            <div class="paper-info">
+              <h3 class="paper-title">{{ paper.title }}</h3>
+              <div class="paper-meta">
+                <span class="meta-item">
+                  <el-icon><Calendar /></el-icon>
+                  {{ formatDate(paper.created_at) }}
+                </span>
+              </div>
+            </div>
+          </div>
 
-      <div v-if="papers.length === 0 && !loading" class="empty-state">
-        <el-icon><Document /></el-icon>
-        <p>暂无试卷，点击上方按钮生成新试卷</p>
+          <div class="paper-stats">
+            <div class="stat-item">
+              <div class="stat-value">{{ paper.question_count }}</div>
+              <div class="stat-label">题目数量</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-value">{{ paper.total_score }}</div>
+              <div class="stat-label">试卷总分</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+              <div class="stat-value">{{ paper.time_limit || '∞' }}</div>
+              <div class="stat-label">限时(分)</div>
+            </div>
+          </div>
+
+          <div class="paper-actions">
+            <el-button type="primary" plain @click="previewPaper(paper)">
+              预览试卷
+            </el-button>
+            <el-button type="primary" @click="startExam(paper.id)">
+              开始答题
+            </el-button>
+            <el-dropdown trigger="click" @command="(cmd) => handleCommand(cmd, paper)">
+              <el-button class="more-btn">
+                <el-icon><MoreFilled /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="delete" class="delete-item">
+                    <el-icon><Delete /></el-icon>删除试卷
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </el-card>
+      </div>
+
+      <div v-else-if="!loading" class="empty-state">
+        <div class="empty-illustration">
+          <el-icon><Document /></el-icon>
+        </div>
+        <h3>暂无试卷</h3>
+        <p>您还没有生成过试卷，快去创建一个吧！</p>
+        <el-button type="primary" round @click="$router.push('/papers/create')">
+          立即生成
+        </el-button>
       </div>
     </div>
 
     <!-- 试卷预览对话框 -->
-    <el-dialog v-model="previewVisible" title="试卷预览" width="800px" top="5vh">
-      <div v-if="previewPaperData" class="paper-preview">
-        <div class="preview-header">
-          <h2>{{ previewPaperData.title }}</h2>
-          <p v-if="previewPaperData.description">{{ previewPaperData.description }}</p>
-          <div class="preview-meta">
-            <span>总分：{{ previewPaperData.total_score }} 分</span>
-            <span>题目数：{{ previewQuestions.length }}</span>
-            <span>时限：{{ previewPaperData.time_limit ? `${previewPaperData.time_limit} 分钟` : '不限时' }}</span>
-          </div>
+    <el-dialog 
+      v-model="previewVisible" 
+      :title="previewPaperData?.title" 
+      width="850px" 
+      top="5vh"
+      class="paper-preview-dialog"
+      destroy-on-close
+    >
+      <div v-if="previewPaperData" class="paper-preview-content">
+        <div class="preview-info-bar">
+          <el-tag type="info" effect="plain">总分：{{ previewPaperData.total_score }}分</el-tag>
+          <el-tag type="info" effect="plain">题目：{{ previewQuestions.length }}题</el-tag>
+          <el-tag type="info" effect="plain">限时：{{ previewPaperData.time_limit ? `${previewPaperData.time_limit}分钟` : '不限时' }}</el-tag>
         </div>
         
-        <el-divider />
-        
-        <div v-loading="previewLoading" class="preview-questions">
+        <div v-loading="previewLoading" class="preview-questions-list">
           <div 
             v-for="(question, index) in previewQuestions" 
             :key="question.id"
-            class="question-card"
+            class="preview-question-item"
           >
-            <div class="question-header">
-              <div class="question-info">
-                <span class="question-number">{{ index + 1 }}</span>
-                <el-tag :class="['question-type-tag', question.type]" size="small">
-                  {{ getTypeLabel(question.type) }}
-                </el-tag>
-              </div>
-              <div class="question-actions">
+            <div class="q-header">
+              <span class="q-index">{{ index + 1 }}.</span>
+              <el-tag size="small" :type="getTypeTag(question.type)" effect="dark">
+                {{ getTypeLabel(question.type) }}
+              </el-tag>
+              <div class="q-actions">
                 <el-button 
-                  size="small" 
-                  :type="previewFavoriteStatus[question.id] ? 'warning' : 'default'"
+                  link 
+                  :type="previewFavoriteStatus[question.id] ? 'warning' : 'info'"
                   @click="togglePreviewFavorite(question)"
                 >
-                  <el-icon><Star /></el-icon>
+                  <el-icon><StarFilled v-if="previewFavoriteStatus[question.id]" /><Star v-else /></el-icon>
                   {{ previewFavoriteStatus[question.id] ? '已收藏' : '收藏' }}
                 </el-button>
               </div>
             </div>
-            <div class="question-content">{{ question.question }}</div>
-            <div v-if="question.options?.length" class="question-options">
-              <div v-for="option in question.options" :key="option" class="option-item">
-                {{ option }}
+            <div class="q-body">
+              <div class="q-text">{{ question.question }}</div>
+              <div v-if="question.options?.length" class="q-options">
+                <div 
+                  v-for="(opt, optIdx) in question.options" 
+                  :key="optIdx"
+                  class="q-option"
+                >
+                  <span class="opt-label">{{ String.fromCharCode(65 + optIdx) }}.</span>
+                  <span class="opt-text">{{ opt }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
       <template #footer>
-        <el-button @click="previewVisible = false">关闭</el-button>
-        <el-button type="primary" @click="startExam(previewPaperData?.id)">开始答题</el-button>
+        <div class="dialog-footer">
+          <el-button @click="previewVisible = false">关闭预览</el-button>
+          <el-button type="primary" @click="startExam(previewPaperData?.id)">
+            立即开始答题
+          </el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -110,11 +156,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { paperApi, favoriteApi } from '@/api'
+import { 
+  Document, Plus, Files, Calendar, MoreFilled, 
+  Delete, Star, StarFilled 
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
-
 const loading = ref(false)
 const papers = ref([])
 const previewVisible = ref(false)
@@ -128,6 +177,20 @@ const getTypeLabel = (type) => {
   return labels[type] || type
 }
 
+const getTypeTag = (type) => {
+  const tags = { single: '', multiple: 'success', judge: 'warning', fill: 'info' }
+  return tags[type] || ''
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
+}
+
 const fetchPapers = async () => {
   loading.value = true
   try {
@@ -139,6 +202,29 @@ const fetchPapers = async () => {
   }
 }
 
+const handleCommand = (command, paper) => {
+  if (command === 'delete') {
+    deletePaper(paper.id)
+  }
+}
+
+const deletePaper = (id) => {
+  ElMessageBox.confirm('确定要删除这份试卷吗？此操作不可恢复。', '警告', {
+    confirmButtonText: '确定删除',
+    cancelButtonText: '取消',
+    type: 'warning',
+    buttonSize: 'default'
+  }).then(async () => {
+    try {
+      await paperApi.delete(id)
+      ElMessage.success('试卷已删除')
+      fetchPapers()
+    } catch (error) {
+      console.error('删除失败:', error)
+    }
+  }).catch(() => {})
+}
+
 const previewPaper = async (paper) => {
   previewPaperData.value = paper
   previewVisible.value = true
@@ -146,54 +232,46 @@ const previewPaper = async (paper) => {
   previewFavoriteStatus.value = {}
   
   try {
-    previewQuestions.value = await paperApi.getQuestions(paper.id)
+    const questions = await paperApi.getQuestions(paper.id)
+    previewQuestions.value = questions
+    
     // 检查收藏状态
-    for (const question of previewQuestions.value) {
-      try {
-        const result = await favoriteApi.check(question.id)
-        previewFavoriteStatus.value[question.id] = result.favorited
-      } catch (error) {
-        previewFavoriteStatus.value[question.id] = false
-      }
-    }
+    const favorites = await favoriteApi.getAll()
+    questions.forEach(q => {
+      previewFavoriteStatus.value[q.id] = favorites.some(f => f.question_id === q.id)
+    })
   } catch (error) {
-    console.error('获取试卷题目失败:', error)
+    console.error('获取试卷详情失败:', error)
+    ElMessage.error('获取试卷详情失败')
   } finally {
     previewLoading.value = false
   }
 }
 
 const togglePreviewFavorite = async (question) => {
+  const isFav = previewFavoriteStatus.value[question.id]
   try {
-    if (previewFavoriteStatus.value[question.id]) {
-      await favoriteApi.remove(question.id)
-      previewFavoriteStatus.value[question.id] = false
-      ElMessage.success('已取消收藏')
+    if (isFav) {
+      const favorites = await favoriteApi.getAll()
+      const fav = favorites.find(f => f.question_id === question.id)
+      if (fav) await favoriteApi.remove(fav.id)
     } else {
-      // 试卷预览中的题目需要找到对应的题库ID，这里使用题目的 bank_id
-      await favoriteApi.add(question.bank_id || 'unknown', question.id)
-      previewFavoriteStatus.value[question.id] = true
-      ElMessage.success('收藏成功')
+      await favoriteApi.add({
+        question_id: question.id,
+        bank_id: question.bank_id,
+        note: ''
+      })
     }
+    previewFavoriteStatus.value[question.id] = !isFav
+    ElMessage.success(isFav ? '已取消收藏' : '收藏成功')
   } catch (error) {
-    console.error('收藏操作失败:', error)
+    console.error('操作失败:', error)
   }
 }
 
-const startExam = (paperId) => {
-  if (paperId) {
-    router.push(`/exam/${paperId}`)
-  }
-}
-
-const deletePaper = async (id) => {
-  try {
-    await paperApi.delete(id)
-    ElMessage.success('删除成功')
-    fetchPapers()
-  } catch (error) {
-    console.error('删除失败:', error)
-  }
+const startExam = (id) => {
+  if (!id) return
+  router.push(`/exam/${id}`)
 }
 
 onMounted(() => {
@@ -203,50 +281,247 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .paper-view {
-  .score-text {
-    color: #e6a23c;
-    font-weight: 600;
-  }
-  
-  .action-buttons {
-    justify-content: center;
-  }
-  
-  .paper-preview {
-    .preview-header {
-      text-align: center;
-      
-      h2 {
-        margin: 0 0 10px;
-        color: #303133;
-      }
-      
-      .preview-meta {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+
+    .title-section {
+      h1 {
+        margin: 0;
+        font-size: 28px;
         display: flex;
-        justify-content: center;
-        gap: 30px;
+        align-items: center;
+        gap: 12px;
+        color: #1a1a1a;
+        .el-icon { color: #409eff; }
+      }
+      .subtitle {
+        margin: 8px 0 0;
         color: #909399;
         font-size: 14px;
       }
     }
-    
-    .preview-questions {
-      max-height: 60vh;
-      overflow-y: auto;
-    }
-    
-    .question-number {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: #409eff;
-      color: #fff;
-      font-size: 14px;
+
+    .create-btn {
+      padding: 12px 24px;
       font-weight: 600;
+      border-radius: 8px;
     }
+  }
+
+  .papers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+  }
+
+  .paper-card {
+    border-radius: 16px;
+    border: 1px solid #ebeef5;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+    }
+
+    .paper-card-header {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+
+      .paper-icon {
+        width: 48px;
+        height: 48px;
+        background: #ecf5ff;
+        color: #409eff;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+      }
+
+      .paper-info {
+        flex: 1;
+        .paper-title {
+          margin: 0;
+          font-size: 18px;
+          color: #303133;
+          line-height: 1.4;
+        }
+        .paper-meta {
+          margin-top: 4px;
+          font-size: 13px;
+          color: #909399;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          }
+        }
+      }
+    }
+
+    .paper-stats {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+
+      .stat-item {
+        text-align: center;
+        flex: 1;
+        .stat-value {
+          font-size: 18px;
+          font-weight: 700;
+          color: #303133;
+        }
+        .stat-label {
+          font-size: 12px;
+          color: #909399;
+          margin-top: 2px;
+        }
+      }
+
+      .stat-divider {
+        width: 1px;
+        height: 24px;
+        background: #dcdfe6;
+      }
+    }
+
+    .paper-actions {
+      display: flex;
+      gap: 10px;
+      
+      .el-button {
+        flex: 1;
+        border-radius: 8px;
+      }
+
+      .more-btn {
+        flex: 0 0 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 0;
+    background: #fff;
+    border-radius: 16px;
+    .empty-illustration {
+      font-size: 64px;
+      color: #f0f2f5;
+      margin-bottom: 16px;
+    }
+    h3 { color: #303133; margin-bottom: 8px; }
+    p { color: #909399; margin-bottom: 24px; }
+  }
+}
+
+.paper-preview-dialog {
+  :deep(.el-dialog__body) {
+    padding: 0;
+  }
+
+  .paper-preview-content {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: 24px;
+
+    .preview-info-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .preview-question-item {
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .q-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+
+        .q-index {
+          font-weight: 700;
+          color: #303133;
+        }
+
+        .q-actions {
+          margin-left: auto;
+        }
+      }
+
+      .q-body {
+        .q-text {
+          font-size: 16px;
+          color: #303133;
+          line-height: 1.6;
+          margin-bottom: 16px;
+        }
+
+        .q-options {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 12px;
+
+          .q-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #606266;
+
+            .opt-label {
+              font-weight: 600;
+              color: #409eff;
+              flex-shrink: 0;
+            }
+
+            .opt-text {
+              word-break: break-word;
+              overflow-wrap: break-word;
+              line-height: 1.5;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.delete-item {
+  color: #f56c6c !important;
+  &:hover {
+    background-color: #fef0f0 !important;
   }
 }
 </style>

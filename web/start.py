@@ -125,11 +125,17 @@ def start_dev_server():
     # 检查依赖
     check_dependencies()
     
+    # 设置环境变量以强制使用 UTF-8 编码，解决 Windows 下的编码问题
+    env = os.environ.copy()
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    
     # 启动后端
     print("启动后端 API 服务...")
     backend_process = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
-        cwd=str(BACKEND_DIR)
+        cwd=str(BACKEND_DIR),
+        env=env
     )
     time.sleep(2)
     

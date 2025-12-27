@@ -36,6 +36,8 @@ export const bankApi = {
     api.put(`/banks/${bankId}/questions/${questionId}`, data),
   deleteQuestion: (bankId, questionId) =>
     api.delete(`/banks/${bankId}/questions/${questionId}`),
+  batchAddQuestions: (bankId, questions) =>
+    api.post(`/banks/${bankId}/questions/batch`, { questions }),
 };
 
 // ============ 试卷 API ============

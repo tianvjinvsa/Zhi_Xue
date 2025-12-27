@@ -1,4 +1,4 @@
-"""
+﻿"""
 AI服务 - 处理AI相关功能
 """
 import json
@@ -39,28 +39,28 @@ class AIService:
 
 要求：
 1. 识别题目类型：single(单选题), multiple(多选题), judge(判断题), fill(填空题)
-2. 提取题目内容、选项（如有）、正确答案
+2. 提取题目内容、选项(如有)、正确答案
 3. 如果能推断出答案解析，请补充explanation字段
-4. 难度默认为3（1-5级）
+4. 难度默认为3(1-5级)
 5. 如果有多道题目，返回JSON数组
-6. 【重要】题目内容中不要包含原始的题目序号（如"1."、"第1题"、"一、"等），只保留纯粹的题目内容
+6. [重要]题目内容中不要包含原始的题目序号(如"1."、"第1题"、"一、"等)，只保留纯粹的题目内容
 
 输入内容：
 {content}
 
-请严格按照以下JSON格式输出（不要添加任何其他文字说明）：
-{{
+请严格按照以下JSON格式输出(不要添加任何其他文字说明)：
+{
   "questions": [
-    {{
+    {
       "type": "题目类型(single/multiple/judge/fill)",
-      "question": "题目内容（不含序号，直接是题目正文）",
-      "options": ["A. 选项1", "B. 选项2", "C. 选项3", "D. 选项4"],
-      "answer": "正确答案（单选为字母如A，多选为数组如[\"A\",\"B\"]，判断为true/false）",
-      "explanation": "答案解析（可选）",
+      "question": "题目内容(不含序号，直接是题目正文)",
+      "options": ["A. 内容1", "B. 内容2", "C. 内容3", "D. 内容4"],
+      "answer": "正确答案(单选为字母如A，多选为数组如[\"A\",\"B\"]，判断为正确/错误)",
+      "explanation": "答案解析(可选)",
       "difficulty": 3
-    }}
+    }
   ]
-}}
+}
 
 注意：
 - 选项格式统一为 "X. 内容" 的形式
@@ -82,18 +82,18 @@ class AIService:
 5. 选项设计要有干扰性，但答案必须明确
 
 请严格按照以下JSON格式输出：
-{{
+{
   "questions": [
-    {{
+    {
       "type": "题目类型",
       "question": "题目内容",
-      "options": ["A. 选项1", "B. 选项2", "C. 选项3", "D. 选项4"],
+      "options": ["A. 内容1", "B. 内容2", "C. 内容3", "D. 内容4"],
       "answer": "正确答案",
       "explanation": "答案解析",
       "difficulty": 难度数字
-    }}
+    }
   ]
-}}"""
+}"""
 
     def __init__(self):
         self._client = None
@@ -114,9 +114,15 @@ class AIService:
                 if ai_config.api_base_url:
                     # 确保 base_url 格式正确
                     base_url = ai_config.api_base_url.strip()
-                    # 移除末尾的斜杠，OpenAI SDK 会自动添加
+                    # 移除末尾的斜杠
                     if base_url.endswith('/'):
                         base_url = base_url.rstrip('/')
+                    # 如果用户误输入了 /chat/completions，将其移除，SDK会自动添加
+                    if base_url.endswith('/chat/completions'):
+                        base_url = base_url.replace('/chat/completions', '')
+                    if base_url.endswith('/chat'):
+                        base_url = base_url.replace('/chat', '')
+                        
                     kwargs['base_url'] = base_url
                 
                 self._client = OpenAI(**kwargs)
@@ -128,7 +134,7 @@ class AIService:
         return self._client
     
     def _reset_client(self):
-        """重置客户端（配置更改后调用）"""
+        """重置客户端(配置更改后调用)"""
         self._client = None
     
     def check_connection(self, temp_config: Optional[Dict] = None) -> tuple[bool, str]:
@@ -188,16 +194,26 @@ class AIService:
         client = self._get_client()
         ai_config = app_config.ai_config
         
-        model = ai_config.vision_model if use_vision else ai_config.model
+        # 如果是视觉请求但未配置视觉模型，则回退到普通模型
+        model = ai_config.model
+        if use_vision and ai_config.vision_model:
+            model = ai_config.vision_model
         
-        response = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            max_tokens=ai_config.max_tokens,
-            temperature=ai_config.temperature
-        )
+        print(f"正在调用 AI API, 模型: {model}, Base URL: {ai_config.api_base_url}")
         
-        return response.choices[0].message.content
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=ai_config.max_tokens,
+                temperature=ai_config.temperature
+            )
+            content = response.choices[0].message.content
+            print(f"AI 响应成功，长度: {len(content)}")
+            return content
+        except Exception as e:
+            print(f"AI 调用失败: {str(e)}")
+            raise e
     
     def _parse_json_response(self, response: str) -> Dict:
         """解析JSON响应"""
@@ -231,7 +247,8 @@ class AIService:
         返回: (题目列表, 错误消息)
         """
         try:
-            prompt = self.QUESTION_PARSE_PROMPT.format(content=text)
+            # 使用 replace 而不是 format，防止 text 中的花括号导致 KeyError
+            prompt = self.QUESTION_PARSE_PROMPT.replace("{content}", text)
             
             messages = [
                 {"role": "system", "content": "你是一个专业的题目格式化助手，只输出JSON格式数据。"},
@@ -268,7 +285,7 @@ class AIService:
     
     def parse_questions_from_file(self, file_path: str) -> tuple[List[Question], str]:
         """
-        从文件解析题目（支持 Word、Excel、TXT、图片）
+        从文件解析题目(支持 Word、Excel、TXT、图片)
         返回: (题目列表, 错误消息)
         """
         path = Path(file_path)
@@ -323,7 +340,7 @@ class AIService:
                 if text:
                     paragraphs.append(text)
             
-            # 提取表格内容（如果有）
+            # 提取表格内容(如果有)
             for table in doc.tables:
                 for row in table.rows:
                     row_text = []
@@ -387,7 +404,7 @@ class AIService:
         return types
     
     def get_file_filter_string(self) -> str:
-        """获取文件过滤器字符串（用于文件对话框）"""
+        """获取文件过滤器字符串(用于文件对话框)"""
         filters = []
         types = self.get_supported_file_types()
         
@@ -448,7 +465,7 @@ class AIService:
 要求：
 1. 识别所有题目
 2. 确定题目类型：single(单选), multiple(多选), judge(判断), fill(填空)
-3. 提取选项和正确答案（如果图片中有标注）
+3. 提取选项和正确答案(如果图片中有标注)
 4. 如果答案不明确，answer字段留空
 
 输出JSON格式：
@@ -457,7 +474,7 @@ class AIService:
     {
       "type": "题目类型",
       "question": "题目内容",
-      "options": ["A. 选项1", "B. 选项2"...],
+      "options": ["A. 内容1", "B. 内容2"...],
       "answer": "答案",
       "explanation": "",
       "difficulty": 3
@@ -512,32 +529,25 @@ class AIService:
             return [], f"图片识别失败: {str(e)}"
     
     def generate_questions(self, topic: str, count: int = 5, 
-                          types: List[str] = None,
-                          min_difficulty: int = 2,
-                          max_difficulty: int = 4) -> tuple[List[Question], str]:
+                          type_distribution: str = None,
+                          difficulty_range: tuple = (2, 4)) -> tuple[List[Question], str]:
         """
         根据主题生成题目
         返回: (题目列表, 错误消息)
         """
         try:
-            if types is None:
-                types = ['single', 'multiple', 'judge']
+            if type_distribution is None:
+                type_distribution = "单选题、多选题、判断题"
             
-            type_names = {
-                'single': '单选题',
-                'multiple': '多选题',
-                'judge': '判断题',
-                'fill': '填空题'
-            }
-            type_distribution = '、'.join([type_names.get(t, t) for t in types])
-            difficulty_range = f"{min_difficulty}-{max_difficulty}级"
+            min_diff, max_diff = difficulty_range
+            difficulty_str = f"{min_diff}-{max_diff}级"
             
-            prompt = self.QUESTION_GENERATE_PROMPT.format(
-                topic=topic,
-                count=count,
-                type_distribution=type_distribution,
-                difficulty_range=difficulty_range
-            )
+            # 使用 replace 替换占位符，避免内容中的花括号引起 format 错误
+            prompt = self.QUESTION_GENERATE_PROMPT
+            prompt = prompt.replace("{topic}", topic)
+            prompt = prompt.replace("{count}", str(count))
+            prompt = prompt.replace("{type_distribution}", type_distribution)
+            prompt = prompt.replace("{difficulty_range}", difficulty_str)
             
             messages = [
                 {"role": "system", "content": "你是一个专业的出题专家，擅长设计有区分度的考试题目。"},

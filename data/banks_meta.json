@@ -14,5 +14,21 @@
     "question_count": 15,
     "created_at": "2025-12-26 22:10:43",
     "updated_at": "2025-12-27 01:16:01"
+  },
+  "24df2cde-edab-4194-86fc-c4ba75a7f9a3": {
+    "name": "习近平思想",
+    "description": "",
+    "subject": "文科",
+    "question_count": 0,
+    "created_at": "2025-12-27 13:14:28",
+    "updated_at": "2025-12-27 13:14:28"
+  },
+  "ae58d639-f1fa-4624-a4fd-37cb41d0f0c3": {
+    "name": "习近平思想",
+    "description": "",
+    "subject": "文科",
+    "question_count": 30,
+    "created_at": "2025-12-27 13:16:06",
+    "updated_at": "2025-12-27 13:16:07"
   }
 }

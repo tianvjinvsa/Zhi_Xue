@@ -1,0 +1,525 @@
+{
+  "id": "ae58d639-f1fa-4624-a4fd-37cb41d0f0c3",
+  "name": "习近平思想",
+  "description": "",
+  "subject": "文科",
+  "questions": [
+    {
+      "id": "3e65b1bb-be26-4a29-96a6-4f96ca37d24f",
+      "type": "judge",
+      "question": "1. 中华民族伟大复兴进入关键时期。",
+      "options": [],
+      "answer": "√",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "11f28bd1-901f-4ecd-a4ed-ac311ea63cc8",
+      "type": "judge",
+      "question": "2. 习近平新时代中国特色社会主义思想是当代中国马克思主义、二十一世纪马克思主义，是中华文化和中国精神的时代精华，实现了马克思主义中国化时代化新的飞跃。",
+      "options": [],
+      "answer": "√",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "314f14e0-5bd5-44da-96ea-ed5807f18ef1",
+      "type": "judge",
+      "question": "3. 习近平新时代中国特色社会主义思想是在把握世界发展大势、维护人类共同利益、推动中国与世界携手并进的过程中创立并不断丰富发展的。",
+      "options": [],
+      "answer": "√",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "65226a43-eef0-42c3-b2c8-d33d98694004",
+      "type": "judge",
+      "question": "4. 坚持自信自立是根本价值立场，体现了历史唯物主义群众史观。",
+      "options": [],
+      "answer": "×",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "a494813f-9319-4753-b057-8611dc485574",
+      "type": "judge",
+      "question": "5. 习近平新时代中国特色社会主义思想是“两个结合”的重大成果。",
+      "options": [],
+      "answer": "√",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "ca3669c1-102d-4e38-8bd1-15a707f95dac",
+      "type": "single",
+      "question": "1.（ ）是近代以来中国人民的共同梦想，是中国共产党矢志不渝的奋斗目标。",
+      "options": [
+        "A. 推动中国与世界携手并进",
+        "B. 实现中华民族伟大复兴",
+        "C. 促进人类进步事业",
+        "D. 跨越中等收入陷阱"
+      ],
+      "answer": "B",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "664546ed-8ee7-4340-a6bb-2fd0eb321c31",
+      "type": "single",
+      "question": "2. 党的十八大以来，以习近平同志为核心的党中央团结带领全党全国各族人民，坚持以（ ）全面推进中华民族伟大复兴。",
+      "options": [
+        "A. 中国特色社会主义",
+        "B. 党的创新理论",
+        "C. 实现共同富裕",
+        "D. 中国式现代化"
+      ],
+      "answer": "D",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "b55627f6-fdb4-4881-a0e3-bb97cb3f8946",
+      "type": "single",
+      "question": "3. 党的二十大提出的（ ），是习近平新时代中国特色社会主义思想的世界观、方法论和贯穿其中的立场观点方法的重要体现。",
+      "options": [
+        "A. “六个必须坚持”",
+        "B. “五个必由之路”",
+        "C. 中国式现代化",
+        "D. （此处选项缺失）"
+      ],
+      "answer": "A",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "0f83052d-7a8f-43dc-baa3-2324d6f7a2ce",
+      "type": "single",
+      "question": "4.（ ）是习近平新时代中国特色社会主义思想的主体内容，集中体现了这一思想体系的主要观点和基本精神，构成了这一思想体系的四梁八柱，发挥着统摄作用。",
+      "options": [
+        "A. “十个明确”",
+        "B. “十四个坚持”",
+        "C. “十三个方面的成就”",
+        "D. “六个必须坚持”"
+      ],
+      "answer": "A",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "29af862d-8783-4c58-a422-1d8bdd95c345",
+      "type": "single",
+      "question": "5. 坚持（ ）是根本价值立场，体现了历史唯物主义群众史观。",
+      "options": [
+        "A. 社会主义",
+        "B. 人民当家作主",
+        "C. 人民至上",
+        "D. 中国特色社会主义"
+      ],
+      "answer": "C",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "1414ee56-1d1c-430e-a615-3a75a530d119",
+      "type": "single",
+      "question": "6.（ ）是中国共产党人的境界格局，体现了马克思主义追求人类进步和解放的崇高理想。",
+      "options": [
+        "A. 坚持胸怀天下",
+        "B. 坚持守正创新",
+        "C. 坚持问题导向",
+        "D. 坚持系统观念"
+      ],
+      "answer": "A",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "d3cb4bbf-9edb-445a-84a8-e4418b3d9942",
+      "type": "single",
+      "question": "7.（ ）通过的宪法修正案，郑重地把习近平新时代中国特色社会主义思想载入宪法。",
+      "options": [
+        "A. 十三届全国人大一次会议",
+        "B. 十三届全国人大二次会议",
+        "C. 十四届全国人大一次会议",
+        "D. 十三届全国人大六次会议"
+      ],
+      "answer": "A",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "da017240-c47b-41dc-9d11-42266bbd78fa",
+      "type": "single",
+      "question": "8.（ ）把习近平新时代中国特色社会主义思想确立为党必须长期坚持的指导思想。",
+      "options": [
+        "A. 党的十八大",
+        "B. 党的十九大",
+        "C. 党的二十大",
+        "D. 党的二十届一中全会"
+      ],
+      "answer": "B",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "0a70e36d-c77f-46bd-b864-47f6c15e974a",
+      "type": "single",
+      "question": "9. 党的（ ）指出，党确立习近平同志党中央的核心、全党的核心地位，确立习近平新时代中国特色社会主义思想的指导地位。",
+      "options": [
+        "A. 党的十八届五中全会",
+        "B. 党的十九届六中全会",
+        "C. 党的十九届五中全会",
+        "D. 党的二十届一中全会"
+      ],
+      "answer": "B",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "c1baf5d0-eb9e-4d95-9c47-3fd5e2945931",
+      "type": "single",
+      "question": "10.（ ）是新时代党和国家事业取得历史性成就、发生历史性变革的决定性因素，是党和人民应对一切不确定性的最大确定性、最大底气、最大保证。",
+      "options": [
+        "A. “两个确立”",
+        "B. “四个意识”",
+        "C. “两个维护”",
+        "D. “三个务必”"
+      ],
+      "answer": "A",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "a86a3868-06d3-4eeb-90ec-df06b7db691d",
+      "type": "single",
+      "question": "11. 中国特色社会主义最本质的特征是（ ）。",
+      "options": [
+        "A. 人民共同富裕",
+        "B. 人民当家作主",
+        "C. 中国共产党领导",
+        "D. 社会主义现代化"
+      ],
+      "answer": "C",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "fb5949a5-ec7e-4fa3-bfee-996f6ee07cb4",
+      "type": "single",
+      "question": "12. 坚持和发展中国特色社会主义，总任务是（ ）。",
+      "options": [
+        "A. 实现社会主义现代化和中华民族伟大复兴",
+        "B. 建设中国特色社会主义法治体系、建设社会主义法治国家",
+        "C. 实现社会主义现代化和中华民族伟大复兴，在全面建成小康社会的基础上，分两步走在本世纪中叶建成富强民主文明和谐美丽的社会主义现代化强国",
+        "D. 建设一支听党指挥、能打胜仗、作风优良的人民军队，把人民军队建设成为世界一流军队"
+      ],
+      "answer": "C",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "dac242f5-e7f0-4e37-9ba8-0bf790f207d7",
+      "type": "single",
+      "question": "13. 全面深化改革的总目标是（ ）。",
+      "options": [
+        "A. 坚定道路自信、理论自信、制度自信、文化自信",
+        "B. 完善和发展中国特色社会主义制度、推进国家治理体系和治理能力现代化",
+        "C. 建设中国特色社会主义法治体系、建设社会主义法治国家",
+        "D. 实现中华民族伟大复兴"
+      ],
+      "answer": "B",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "79cf1df7-3b92-4c1d-a595-35ef3fda0cc2",
+      "type": "single",
+      "question": "14.（ ）是习近平新时代中国特色社会主义思想的重要组成部分，是在治国理政各方面作出的理论分析和政策指导，构成了新时代坚持和发展中国特色社会主义的基本方略。",
+      "options": [
+        "A. “十个明确”",
+        "B. “十四个坚持”",
+        "C. “十三个方面的成就”",
+        "D. “六个必须坚持”"
+      ],
+      "answer": "B",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "c9dc8fa0-64c4-4e14-a381-3a9b437c1300",
+      "type": "single",
+      "question": "15. 下列关于习近平新时代中国特色社会主义思想说法错误的是（ ）。",
+      "options": [
+        "A. 是当代中国马克思主义",
+        "B. 是二十一世纪马克思主义",
+        "C. 是中华文化和中国精神的时代精华",
+        "D. 实现了马克思主义中国化时代化的第一次历史性飞跃"
+      ],
+      "answer": "D",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "08f02714-d823-4e8a-9baf-35e5d5a1332a",
+      "type": "single",
+      "question": "16. 党找到了（ ）这个跳出治乱兴衰历史周期率的第二个答案。",
+      "options": [
+        "A. 人民民主",
+        "B. 创新",
+        "C. 改革开放",
+        "D. 自我革命"
+      ],
+      "answer": "D",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "6328eaf7-64b0-4691-a931-7300ba28e0ae",
+      "type": "single",
+      "question": "17. 习近平在强调坚持“第一个结合”的基础上，明确提出把（ ）相结合的重大命题。",
+      "options": [
+        "A. 马克思主义基本原理同中国具体实际",
+        "B. 马克思主义基本原理同中华优秀传统文化",
+        "C. 中国具体实际同中华优秀传统文化",
+        "D. 经济建设同生态文明建设"
+      ],
+      "answer": "B",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "017f4d70-489d-4d17-a06e-914ae64314eb",
+      "type": "single",
+      "question": "18.（ ）是当代中国发展的最新成果，开辟了马克思主义中国化时代化新境界。",
+      "options": [
+        "A. 邓小平理论",
+        "B. “三个代表”重要思想",
+        "C. 科学发展观",
+        "D. 习近平新时代中国特色社会主义思想"
+      ],
+      "answer": "D",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "705aac7f-2c6d-4827-ba6e-9dbd7f1e84ee",
+      "type": "single",
+      "question": "19. “两个确立”是确立习近平同志党中央的核心、全党的核心地位，确立（ ）的指导地位。",
+      "options": [
+        "A. 邓小平理论",
+        "B. “三个代表”重要思想",
+        "C. 科学发展观",
+        "D. 习近平新时代中国特色社会主义思想"
+      ],
+      "answer": "D",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "36ecd5b4-bb50-404a-a54e-f040b028fb31",
+      "type": "single",
+      "question": "20.（ ）是内在精神特质，体现了客观规律性和主观能动性的有机结合。",
+      "options": [
+        "A. 坚持人民至上",
+        "B. 坚持自信自立",
+        "C. 坚持问题导向",
+        "D. 坚持系统观念"
+      ],
+      "answer": "B",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "5a9ff52c-0e09-4851-be22-696c2f4bfcdd",
+      "type": "multiple",
+      "question": "1. 党的十九届六中指出，党确立（ ），确立（ ），反映了全党全军全国各族人民共同心愿。",
+      "options": [
+        "A. 习近平同志党中央的核心、全党的核心地位",
+        "B. 党中央的核心",
+        "C. 习近平新时代中国特色社会主义思想的指导地位",
+        "D. 中国特色社会主义思想的指导地位"
+      ],
+      "answer": "AC",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "0d6350a6-39f5-4fc7-9292-1b8761e0a544",
+      "type": "multiple",
+      "question": "2. 习近平新时代中国特色社会主义思想创立的时代背景包括（ ）。",
+      "options": [
+        "A. 世界百年未有之大变局加速演进、中华民族伟大复兴进入关键时期",
+        "B. 中国式现代化全面推进拓展",
+        "C. 党和国家事业取得历史性成就、发生历史性变革的蓬勃生机",
+        "D. 中国共产党自我革命开辟新境界"
+      ],
+      "answer": "ABCD",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "86dfe1ae-23de-48c3-930f-620afaac8ef3",
+      "type": "multiple",
+      "question": "3. 习近平新时代中国特色社会主义思想（ ）。",
+      "options": [
+        "A. 把马克思主义基本原理同中国具体实际相结合、同中华优秀传统文化相结合",
+        "B. 使马克思主义这个魂脉和中华优秀传统文化这个根脉内在贯通、相互成就",
+        "C. 是中华民族的文化主体性最有力的体现",
+        "D. 是中华文化和中国精神的时代精华"
+      ],
+      "answer": "ABCD",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "79dcdc02-a46d-432d-a06b-56788cdbe351",
+      "type": "multiple",
+      "question": "4. 习近平新时代中国特色社会主义思想是马克思主义基本原理（ ）的重大成果，是坚持“两个结合”的光辉典范。",
+      "options": [
+        "A. 同中国社会发展相结合",
+        "B. 同中国具体实际相结合",
+        "C. 同中华优秀传统文化相结合",
+        "D. 同社会主义现代化建设相结合"
+      ],
+      "answer": "BC",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:06",
+      "updated_at": "2025-12-27 13:16:06",
+      "source": "manual"
+    },
+    {
+      "id": "6439b541-5076-44f9-8dfc-124f54f86b0b",
+      "type": "multiple",
+      "question": "5. 习近平新时代中国特色社会主义思想的历史地位是（ ）。",
+      "options": [
+        "A. 当代中国马克思主义",
+        "B. 二十一世纪马克思主义",
+        "C. 中华民族和中国精神的时代精华",
+        "D. 实现了马克思主义中国化时代化的飞跃"
+      ],
+      "answer": "ABCD",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-27 13:16:07",
+      "updated_at": "2025-12-27 13:16:07",
+      "source": "manual"
+    }
+  ],
+  "created_at": "2025-12-27 13:16:06",
+  "updated_at": "2025-12-27 13:16:07"
+}

@@ -374,6 +374,7 @@ const pathConfig = ref({
 const loadConfig = async () => {
   try {
     const config = await configApi.getAI()
+    if (!config) return
     aiConfig.value.apiBaseUrl = config.api_base_url || ''
     aiConfig.value.apiKey = ''
     aiConfig.value.model = config.model || 'gpt-4o-mini'
@@ -388,6 +389,7 @@ const loadConfig = async () => {
 const loadPathConfig = async () => {
   try {
     const config = await configApi.getPaths()
+    if (!config) return
     pathConfig.value.banksDir = config.banks_dir || ''
     pathConfig.value.papersDir = config.papers_dir || ''
     pathConfig.value.resultsDir = config.results_dir || ''
@@ -490,7 +492,11 @@ const testConnection = async () => {
 const loadVersion = async () => {
   try {
     const data = await systemApi.getVersion()
-    currentVersion.value = data.version
+    if (data && data.version) {
+      currentVersion.value = data.version
+    } else {
+      currentVersion.value = '1.0.0'
+    }
   } catch {
     currentVersion.value = '1.0.0'
   }
@@ -681,10 +687,27 @@ const resetSystem = async () => {
   }
 }
 
-onMounted(() => {
-  loadConfig()
-  loadPathConfig()
-  loadVersion()
+onMounted(async () => {
+  try {
+    await Promise.all([
+      loadConfig(),
+      loadPathConfig(),
+      loadVersion()
+    ])
+    
+    // 自动检查一次连接状态
+    if (aiConfig.value.apiBaseUrl) {
+      // 如果有配置，尝试静默测试
+      try {
+        const res = await aiApi.checkConnection()
+        connectionStatus.value = res.success
+      } catch (e) {
+        connectionStatus.value = false
+      }
+    }
+  } catch (error) {
+    console.error('初始化设置页面失败:', error)
+  }
 })
 </script>
 

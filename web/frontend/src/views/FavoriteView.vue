@@ -1,13 +1,16 @@
 <template>
   <div class="favorite-view">
     <div class="page-header">
-      <h1><el-icon><Star /></el-icon>我的收藏</h1>
+      <div class="title-section">
+        <h1><el-icon><StarFilled /></el-icon>我的收藏</h1>
+        <p class="subtitle">回顾和复习您收藏的重点题目</p>
+      </div>
       <div class="header-actions">
         <el-select 
           v-model="filterBank" 
-          placeholder="筛选题库" 
+          placeholder="按题库筛选" 
           clearable 
-          style="width: 200px; margin-right: 10px;"
+          class="bank-filter"
         >
           <el-option 
             v-for="bank in banks" 
@@ -22,8 +25,8 @@
           v-if="favorites.length > 0"
         >
           <template #reference>
-            <el-button type="danger">
-              <el-icon><Delete /></el-icon>清空收藏
+            <el-button type="danger" plain>
+              <el-icon><Delete /></el-icon>清空全部
             </el-button>
           </template>
         </el-popconfirm>
@@ -31,273 +34,215 @@
     </div>
 
     <!-- 统计信息 -->
-    <div class="stats-cards" v-if="statistics">
+    <div class="stats-overview" v-if="statistics">
       <el-row :gutter="20">
-        <el-col :span="6">
-          <el-card shadow="hover" class="stat-card">
-            <div class="stat-content">
-              <el-icon :size="32" color="#409EFF"><Star /></el-icon>
-              <div class="stat-info">
-                <div class="stat-value">{{ statistics.total }}</div>
-                <div class="stat-label">收藏总数</div>
-              </div>
+        <el-col :span="4">
+          <div class="stat-box total">
+            <div class="stat-icon"><Star /></div>
+            <div class="stat-data">
+              <div class="value">{{ statistics.total }}</div>
+              <div class="label">收藏总数</div>
             </div>
-          </el-card>
+          </div>
         </el-col>
-        <el-col :span="6">
-          <el-card shadow="hover" class="stat-card">
-            <div class="stat-content">
-              <el-icon :size="32" color="#67C23A"><Folder /></el-icon>
-              <div class="stat-info">
-                <div class="stat-value">{{ statistics.bank_count }}</div>
-                <div class="stat-label">涉及题库</div>
-              </div>
+        <el-col :span="4">
+          <div class="stat-box banks">
+            <div class="stat-icon"><Folder /></div>
+            <div class="stat-data">
+              <div class="value">{{ statistics.bank_count }}</div>
+              <div class="label">涉及题库</div>
             </div>
-          </el-card>
+          </div>
         </el-col>
-        <el-col :span="6">
-          <el-card shadow="hover" class="stat-card">
-            <div class="stat-content">
-              <el-icon :size="32" color="#E6A23C"><Select /></el-icon>
-              <div class="stat-info">
-                <div class="stat-value">{{ statistics.type_stats?.single || 0 }}</div>
-                <div class="stat-label">单选题</div>
-              </div>
+        <el-col :span="4">
+          <div class="stat-box single">
+            <div class="stat-icon"><Select /></div>
+            <div class="stat-data">
+              <div class="value">{{ statistics.type_stats?.single || 0 }}</div>
+              <div class="label">单选题</div>
             </div>
-          </el-card>
+          </div>
         </el-col>
-        <el-col :span="6">
-          <el-card shadow="hover" class="stat-card">
-            <div class="stat-content">
-              <el-icon :size="32" color="#F56C6C"><Check /></el-icon>
-              <div class="stat-info">
-                <div class="stat-value">{{ statistics.type_stats?.judge || 0 }}</div>
-                <div class="stat-label">判断题</div>
-              </div>
+        <el-col :span="4">
+          <div class="stat-box multiple">
+            <div class="stat-icon"><Finished /></div>
+            <div class="stat-data">
+              <div class="value">{{ statistics.type_stats?.multiple || 0 }}</div>
+              <div class="label">多选题</div>
             </div>
-          </el-card>
+          </div>
+        </el-col>
+        <el-col :span="4">
+          <div class="stat-box judge">
+            <div class="stat-icon"><Check /></div>
+            <div class="stat-data">
+              <div class="value">{{ statistics.type_stats?.judge || 0 }}</div>
+              <div class="label">判断题</div>
+            </div>
+          </div>
+        </el-col>
+        <el-col :span="4">
+          <div class="stat-box fill">
+            <div class="stat-icon"><EditPen /></div>
+            <div class="stat-data">
+              <div class="value">{{ statistics.type_stats?.fill || 0 }}</div>
+              <div class="label">填空题</div>
+            </div>
+          </div>
         </el-col>
       </el-row>
     </div>
 
     <!-- 收藏列表 -->
-    <div class="card-container">
-      <div v-loading="loading">
-        <div v-if="filteredFavorites.length === 0 && !loading" class="empty-state">
-          <el-icon><StarFilled /></el-icon>
-          <p v-if="filterBank">当前筛选条件下没有收藏的题目</p>
-          <p v-else>还没有收藏任何题目，去题库中收藏你感兴趣的题目吧！</p>
-          <el-button type="primary" @click="$router.push('/banks')" v-if="!filterBank">
-            浏览题库
-          </el-button>
+    <div v-loading="loading" class="content-section">
+      <div v-if="filteredFavorites.length === 0 && !loading" class="empty-state">
+        <div class="empty-illustration">
+          <el-icon><Star /></el-icon>
         </div>
+        <h3>暂无收藏</h3>
+        <p>{{ filterBank ? '当前筛选条件下没有收藏的题目' : '还没有收藏任何题目，去题库中看看吧！' }}</p>
+        <el-button type="primary" round @click="$router.push('/banks')" v-if="!filterBank">
+          浏览题库
+        </el-button>
+      </div>
 
-        <div v-else class="favorites-list">
-          <el-card 
-            v-for="(fav, index) in filteredFavorites" 
-            :key="fav.question_id" 
-            class="favorite-card"
-            shadow="hover"
-          >
-            <div class="card-header">
-              <div class="question-info">
-                <el-tag :type="getTypeTagType(fav.question_type)" size="small">
-                  {{ getTypeName(fav.question_type) }}
-                </el-tag>
-                <el-tag type="info" size="small" class="bank-tag">
-                  {{ fav.bank_name }}
-                </el-tag>
-                <el-rate 
-                  v-model="fav.difficulty" 
-                  disabled 
-                  size="small"
-                  class="difficulty-rate"
-                />
-              </div>
-              <div class="card-actions">
+      <div v-else class="favorites-grid">
+        <el-card 
+          v-for="fav in filteredFavorites" 
+          :key="fav.question_id" 
+          class="favorite-card"
+          shadow="hover"
+        >
+          <div class="card-header">
+            <div class="q-meta">
+              <el-tag :type="getTypeTagType(fav.question_type)" size="small" effect="dark">
+                {{ getTypeName(fav.question_type) }}
+              </el-tag>
+              <span class="bank-name">
+                <el-icon><Folder /></el-icon>
+                {{ fav.bank_name }}
+              </span>
+              <el-rate v-model="fav.difficulty" disabled size="small" />
+            </div>
+            <div class="q-actions">
+              <el-tooltip content="取消收藏" placement="top">
                 <el-button 
                   type="warning" 
-                  size="small" 
-                  circle
+                  circle 
+                  size="small"
                   @click="removeFavorite(fav.question_id)"
                 >
-                  <el-icon><Star /></el-icon>
+                  <el-icon><StarFilled /></el-icon>
                 </el-button>
-              </div>
+              </el-tooltip>
             </div>
+          </div>
 
-            <div class="question-content">
-              <span class="question-index">{{ index + 1 }}. </span>
-              {{ fav.question_content }}
-            </div>
-
-            <!-- 选项 -->
-            <div class="options-list" v-if="fav.options && fav.options.length > 0">
+          <div class="q-content">
+            <div class="q-text">{{ fav.question_text }}</div>
+            
+            <div v-if="fav.options?.length" class="q-options">
               <div 
-                v-for="(option, optIndex) in fav.options" 
-                :key="optIndex"
-                class="option-item"
-                :class="{ 'correct-option': isCorrectOption(fav, optIndex) }"
+                v-for="(opt, optIdx) in fav.options" 
+                :key="optIdx"
+                class="q-option"
+                :class="{ 'is-answer': isCorrectOption(fav, optIdx) && fav.showAnswer }"
               >
-                <span class="option-letter">{{ String.fromCharCode(65 + optIndex) }}.</span>
-                <span class="option-text">{{ option }}</span>
+                <span class="opt-label">{{ String.fromCharCode(65 + optIdx) }}</span>
+                <span class="opt-text">{{ opt }}</span>
               </div>
             </div>
+          </div>
 
-            <!-- 判断题答案 -->
-            <div class="judge-answer" v-if="fav.question_type === 'judge'">
-              <span class="answer-label">正确答案：</span>
-              <el-tag :type="fav.answer ? 'success' : 'danger'">
-                {{ fav.answer ? '正确' : '错误' }}
-              </el-tag>
-            </div>
-
-            <!-- 答案和解析 -->
-            <el-collapse v-model="expandedItems" class="answer-collapse">
-              <el-collapse-item :name="fav.question_id">
-                <template #title>
-                  <span class="collapse-title">
-                    <el-icon><View /></el-icon>
-                    查看答案与解析
-                  </span>
-                </template>
-                <div class="answer-section">
-                  <div class="answer-row" v-if="fav.question_type !== 'judge'">
-                    <span class="answer-label">正确答案：</span>
-                    <span class="answer-value">{{ formatAnswer(fav) }}</span>
-                  </div>
-                  <div class="explanation-row" v-if="fav.explanation">
-                    <span class="explanation-label">解析：</span>
-                    <span class="explanation-text">{{ fav.explanation }}</span>
-                  </div>
-                </div>
-              </el-collapse-item>
-            </el-collapse>
-
-            <!-- 标签 -->
-            <div class="tags-row" v-if="fav.tags && fav.tags.length > 0">
-              <el-tag 
-                v-for="tag in fav.tags" 
-                :key="tag" 
-                size="small" 
-                type="info"
-                class="question-tag"
-              >
-                {{ tag }}
-              </el-tag>
-            </div>
-
-            <div class="card-footer">
-              <span class="collect-time">
-                收藏于 {{ formatDate(fav.collected_at) }}
+          <div class="card-footer">
+            <div class="footer-left">
+              <span class="fav-time">
+                <el-icon><Clock /></el-icon>
+                收藏于 {{ formatDate(fav.favorite_time) }}
               </span>
             </div>
-          </el-card>
-        </div>
+            <div class="footer-right">
+              <el-button 
+                :type="fav.showAnswer ? 'info' : 'primary'" 
+                link 
+                @click="fav.showAnswer = !fav.showAnswer"
+              >
+                {{ fav.showAnswer ? '隐藏答案' : '查看答案' }}
+              </el-button>
+              <el-button type="primary" link @click="editNote(fav)">
+                <el-icon><Edit /></el-icon>笔记
+              </el-button>
+            </div>
+          </div>
+
+          <el-collapse-transition>
+            <div v-if="fav.showAnswer" class="answer-panel">
+              <div class="answer-row">
+                <strong>正确答案：</strong>
+                <span class="answer-text">{{ formatAnswer(fav) }}</span>
+              </div>
+              <div v-if="fav.analysis" class="analysis-row">
+                <strong>解析：</strong>
+                <p>{{ fav.analysis }}</p>
+              </div>
+              <div v-if="fav.note" class="note-row">
+                <strong>我的笔记：</strong>
+                <p>{{ fav.note }}</p>
+              </div>
+            </div>
+          </el-collapse-transition>
+        </el-card>
       </div>
     </div>
+
+    <!-- 笔记编辑对话框 -->
+    <el-dialog v-model="noteDialogVisible" title="编辑笔记" width="400px">
+      <el-input
+        v-model="editingNote"
+        type="textarea"
+        :rows="4"
+        placeholder="输入您的学习笔记或心得..."
+      />
+      <template #footer>
+        <el-button @click="noteDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveNote">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { favoriteApi } from '@/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { 
+  Star, StarFilled, Folder, Select, Finished, 
+  Check, EditPen, Clock, Delete, Edit 
+} from '@element-plus/icons-vue'
+import { favoriteApi, bankApi } from '@/api'
 
 const loading = ref(false)
 const favorites = ref([])
 const banks = ref([])
 const statistics = ref(null)
 const filterBank = ref('')
-const expandedItems = ref([])
 
-const filteredFavorites = computed(() => {
-  if (!filterBank.value) {
-    return favorites.value
-  }
-  return favorites.value.filter(f => f.bank_id === filterBank.value)
-})
-
-const fetchFavorites = async () => {
-  loading.value = true
-  try {
-    const [favData, statsData, banksData] = await Promise.all([
-      favoriteApi.getAll().catch(() => []),
-      favoriteApi.getStatistics().catch(() => ({ total: 0, bank_count: 0, type_stats: {} })),
-      favoriteApi.getBanks().catch(() => [])
-    ])
-    favorites.value = favData || []
-    statistics.value = statsData || { total: 0, bank_count: 0, type_stats: {} }
-    banks.value = banksData || []
-  } catch (error) {
-    console.error('获取收藏失败:', error)
-    favorites.value = []
-    statistics.value = { total: 0, bank_count: 0, type_stats: {} }
-    banks.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-const removeFavorite = async (questionId) => {
-  try {
-    await favoriteApi.remove(questionId)
-    ElMessage.success('已取消收藏')
-    fetchFavorites()
-  } catch (error) {
-    console.error('取消收藏失败:', error)
-  }
-}
-
-const clearAllFavorites = async () => {
-  try {
-    await favoriteApi.clearAll()
-    ElMessage.success('已清空所有收藏')
-    fetchFavorites()
-  } catch (error) {
-    console.error('清空收藏失败:', error)
-  }
-}
+// 笔记编辑
+const noteDialogVisible = ref(false)
+const editingNote = ref('')
+const currentFav = ref(null)
 
 const getTypeName = (type) => {
-  const typeMap = {
-    single: '单选题',
-    multiple: '多选题',
-    judge: '判断题',
-    fill: '填空题'
-  }
-  return typeMap[type] || type
+  const names = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题' }
+  return names[type] || type
 }
 
 const getTypeTagType = (type) => {
-  const typeMap = {
-    single: 'primary',
-    multiple: 'success',
-    judge: 'warning',
-    fill: 'info'
-  }
-  return typeMap[type] || 'info'
-}
-
-const isCorrectOption = (fav, optIndex) => {
-  const letter = String.fromCharCode(65 + optIndex)
-  if (fav.question_type === 'single') {
-    return fav.answer === letter
-  } else if (fav.question_type === 'multiple') {
-    return Array.isArray(fav.answer) && fav.answer.includes(letter)
-  }
-  return false
-}
-
-const formatAnswer = (fav) => {
-  if (fav.question_type === 'multiple' && Array.isArray(fav.answer)) {
-    return fav.answer.join('、')
-  }
-  return fav.answer
+  const types = { single: '', multiple: 'success', judge: 'warning', fill: 'info' }
+  return types[type] || ''
 }
 
 const formatDate = (dateStr) => {
-  if (!dateStr) return ''
+  if (!dateStr) return '-'
   const date = new Date(dateStr)
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
@@ -308,8 +253,86 @@ const formatDate = (dateStr) => {
   })
 }
 
+const isCorrectOption = (fav, idx) => {
+  const label = String.fromCharCode(65 + idx)
+  if (Array.isArray(fav.answer)) {
+    return fav.answer.includes(label)
+  }
+  return fav.answer === label
+}
+
+const formatAnswer = (fav) => {
+  if (Array.isArray(fav.answer)) return fav.answer.join(', ')
+  return fav.answer
+}
+
+const filteredFavorites = computed(() => {
+  if (!filterBank.value) return favorites.value
+  return favorites.value.filter(f => f.bank_id === filterBank.value)
+})
+
+const fetchFavorites = async () => {
+  loading.value = true
+  try {
+    const data = await favoriteApi.getAll()
+    favorites.value = data.map(f => ({ ...f, showAnswer: false }))
+    statistics.value = await favoriteApi.getStatistics()
+  } catch (error) {
+    console.error('获取收藏失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const fetchBanks = async () => {
+  try {
+    banks.value = await bankApi.getAll()
+  } catch (error) {}
+}
+
+const removeFavorite = async (questionId) => {
+  try {
+    const fav = favorites.value.find(f => f.question_id === questionId)
+    if (fav) {
+      await favoriteApi.remove(fav.id)
+      ElMessage.success('已取消收藏')
+      fetchFavorites()
+    }
+  } catch (error) {
+    ElMessage.error('操作失败')
+  }
+}
+
+const clearAllFavorites = async () => {
+  try {
+    await favoriteApi.clear()
+    ElMessage.success('已清空所有收藏')
+    fetchFavorites()
+  } catch (error) {
+    ElMessage.error('操作失败')
+  }
+}
+
+const editNote = (fav) => {
+  currentFav.value = fav
+  editingNote.value = fav.note || ''
+  noteDialogVisible.value = true
+}
+
+const saveNote = async () => {
+  try {
+    await favoriteApi.updateNote(currentFav.value.id, editingNote.value)
+    ElMessage.success('笔记已保存')
+    noteDialogVisible.value = false
+    fetchFavorites()
+  } catch (error) {
+    ElMessage.error('保存失败')
+  }
+}
+
 onMounted(() => {
   fetchFavorites()
+  fetchBanks()
 })
 </script>
 
@@ -318,208 +341,222 @@ onMounted(() => {
   .page-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
+    align-items: flex-start;
+    margin-bottom: 32px;
 
-    h1 {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 24px;
-      font-weight: 600;
-      color: #303133;
-      margin: 0;
+    .title-section {
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #1a1a1a;
+        .el-icon { color: #f7ba2a; }
+      }
+      .subtitle {
+        margin: 8px 0 0;
+        color: #909399;
+        font-size: 14px;
+      }
     }
 
     .header-actions {
       display: flex;
-      align-items: center;
+      gap: 12px;
+      .bank-filter { width: 200px; }
     }
   }
 
-  .stats-cards {
-    margin-bottom: 24px;
+  .stats-overview {
+    margin-bottom: 32px;
+    
+    .stat-box {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      border: 1px solid #f0f0f0;
 
-    .stat-card {
-      .stat-content {
+      .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
-        gap: 16px;
+        justify-content: center;
+        font-size: 20px;
+        color: #fff;
+      }
 
-        .stat-info {
-          .stat-value {
-            font-size: 28px;
-            font-weight: 600;
-            color: #303133;
-          }
+      &.total .stat-icon { background: linear-gradient(135deg, #f7ba2a, #f9d423); }
+      &.banks .stat-icon { background: linear-gradient(135deg, #409eff, #79bbff); }
+      &.single .stat-icon { background: linear-gradient(135deg, #67c23a, #95d475); }
+      &.multiple .stat-icon { background: linear-gradient(135deg, #b37feb, #d3adf7); }
+      &.judge .stat-icon { background: linear-gradient(135deg, #ff7875, #ffa39e); }
+      &.fill .stat-icon { background: linear-gradient(135deg, #909399, #c8c9cc); }
 
-          .stat-label {
-            font-size: 14px;
-            color: #909399;
-          }
+      .stat-data {
+        .value {
+          font-size: 20px;
+          font-weight: 700;
+          color: #303133;
+          line-height: 1.2;
+        }
+        .label {
+          font-size: 12px;
+          color: #909399;
+          margin-top: 2px;
         }
       }
     }
   }
 
-  .card-container {
-    background: #fff;
-    border-radius: 8px;
-    padding: 24px;
-    min-height: 400px;
+  .favorites-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
-  .empty-state {
-    text-align: center;
-    padding: 80px 20px;
-    color: #909399;
+  .favorite-card {
+    border-radius: 16px;
+    border: 1px solid #ebeef5;
+    transition: all 0.3s;
 
-    .el-icon {
-      font-size: 64px;
-      margin-bottom: 16px;
-      color: #dcdfe6;
+    &:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
     }
 
-    p {
-      margin-bottom: 20px;
-      font-size: 16px;
-    }
-  }
-
-  .favorites-list {
-    .favorite-card {
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 16px;
 
-      .card-header {
+      .q-meta {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
-
-        .question-info {
+        gap: 12px;
+        
+        .bank-name {
+          font-size: 13px;
+          color: #909399;
           display: flex;
           align-items: center;
-          gap: 8px;
-
-          .bank-tag {
-            margin-left: 4px;
-          }
-
-          .difficulty-rate {
-            margin-left: 8px;
-          }
+          gap: 4px;
         }
       }
+    }
 
-      .question-content {
+    .q-content {
+      .q-text {
         font-size: 16px;
-        line-height: 1.6;
         color: #303133;
-        margin-bottom: 16px;
-
-        .question-index {
-          font-weight: 600;
-          color: #409EFF;
-        }
+        line-height: 1.6;
+        margin-bottom: 20px;
+        font-weight: 500;
       }
 
-      .options-list {
-        margin-bottom: 16px;
+      .q-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
 
-        .option-item {
-          padding: 8px 12px;
-          margin-bottom: 8px;
-          border-radius: 4px;
-          background: #f5f7fa;
+        .q-option {
           display: flex;
           align-items: flex-start;
-
-          &.correct-option {
-            background: #f0f9eb;
-            border: 1px solid #67C23A;
-          }
-
-          .option-letter {
-            font-weight: 600;
-            margin-right: 8px;
-            color: #606266;
-          }
-
-          .option-text {
-            color: #606266;
-          }
-        }
-      }
-
-      .judge-answer {
-        margin-bottom: 16px;
-
-        .answer-label {
-          font-weight: 500;
-          color: #606266;
-          margin-right: 8px;
-        }
-      }
-
-      .answer-collapse {
-        margin-bottom: 12px;
-        border: none;
-
-        .collapse-title {
-          display: flex;
-          align-items: center;
-          gap: 6px;
+          gap: 8px;
+          padding: 12px 16px;
+          background: #f8f9fa;
+          border-radius: 8px;
           font-size: 14px;
-          color: #409EFF;
-        }
+          color: #606266;
+          border: 1px solid transparent;
 
-        .answer-section {
-          padding: 12px;
-          background: #f5f7fa;
-          border-radius: 4px;
-
-          .answer-row,
-          .explanation-row {
-            margin-bottom: 8px;
-
-            &:last-child {
-              margin-bottom: 0;
-            }
+          &.is-answer {
+            background: #f0f9eb;
+            color: #67c23a;
+            border-color: #c2e7b0;
+            .opt-label { color: #67c23a; }
           }
 
-          .answer-label,
-          .explanation-label {
-            font-weight: 500;
-            color: #606266;
+          .opt-label {
+            font-weight: 700;
+            color: #409eff;
+            flex-shrink: 0;
           }
 
-          .answer-value {
-            color: #67C23A;
-            font-weight: 600;
-          }
-
-          .explanation-text {
-            color: #606266;
+          .opt-text {
+            word-break: break-word;
+            overflow-wrap: break-word;
             line-height: 1.5;
           }
         }
       }
+    }
 
-      .tags-row {
-        margin-bottom: 12px;
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
 
-        .question-tag {
-          margin-right: 6px;
-        }
+      .fav-time {
+        font-size: 12px;
+        color: #909399;
+        display: flex;
+        align-items: center;
+        gap: 4px;
       }
 
-      .card-footer {
+      .footer-right {
         display: flex;
-        justify-content: flex-end;
-        color: #909399;
-        font-size: 12px;
+        gap: 16px;
       }
     }
+
+    .answer-panel {
+      margin-top: 16px;
+      padding: 16px;
+      background: #fdf6ec;
+      border-radius: 8px;
+      font-size: 14px;
+
+      .answer-row {
+        margin-bottom: 12px;
+        .answer-text { color: #67c23a; font-weight: 700; font-size: 16px; }
+      }
+
+      .analysis-row, .note-row {
+        margin-top: 12px;
+        p { margin: 4px 0 0; color: #606266; line-height: 1.6; }
+      }
+
+      .note-row {
+        border-top: 1px dashed #e6a23c;
+        padding-top: 12px;
+        p { color: #e6a23c; font-style: italic; }
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 0;
+    background: #fff;
+    border-radius: 16px;
+    .empty-illustration {
+      font-size: 64px;
+      color: #f0f2f5;
+      margin-bottom: 16px;
+    }
+    h3 { color: #303133; margin-bottom: 8px; }
+    p { color: #909399; margin-bottom: 24px; }
   }
 }
 </style>
