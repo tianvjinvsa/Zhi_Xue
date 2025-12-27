@@ -1,0 +1,258 @@
+// 全局样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// 页面标题
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #ebeef5;
+  
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #303133;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    .el-icon {
+      color: #409EFF;
+    }
+  }
+}
+
+// 卡片容器
+.card-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+}
+
+// 表格样式优化
+.el-table {
+  --el-table-border-color: #ebeef5;
+  
+  th.el-table__cell {
+    background-color: #f5f7fa !important;
+    font-weight: 600;
+    color: #606266;
+  }
+}
+
+// 按钮间距
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  
+  .el-button {
+    margin: 0;
+  }
+}
+
+// 表单项标签
+.el-form-item__label {
+  font-weight: 500;
+}
+
+// 对话框样式
+.el-dialog {
+  border-radius: 8px;
+  
+  .el-dialog__header {
+    border-bottom: 1px solid #ebeef5;
+    padding: 16px 20px;
+    margin-right: 0;
+    
+    .el-dialog__title {
+      font-weight: 600;
+    }
+  }
+  
+  .el-dialog__body {
+    padding: 20px;
+  }
+  
+  .el-dialog__footer {
+    border-top: 1px solid #ebeef5;
+    padding: 12px 20px;
+  }
+}
+
+// 难度星级
+.difficulty-stars {
+  color: #f7ba2a;
+  font-size: 14px;
+}
+
+// 题目类型标签
+.question-type-tag {
+  &.single { --el-tag-bg-color: #ecf5ff; --el-tag-text-color: #409eff; }
+  &.multiple { --el-tag-bg-color: #f0f9eb; --el-tag-text-color: #67c23a; }
+  &.judge { --el-tag-bg-color: #fdf6ec; --el-tag-text-color: #e6a23c; }
+  &.fill { --el-tag-bg-color: #fef0f0; --el-tag-text-color: #f56c6c; }
+}
+
+// 空状态
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #909399;
+  
+  .el-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    color: #c0c4cc;
+  }
+  
+  p {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+}
+
+// 分页容器
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+// 题目卡片
+.question-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #ebeef5;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: box-shadow 0.3s;
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  .question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    
+    .question-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+  }
+  
+  .question-content {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #303133;
+    margin-bottom: 12px;
+  }
+  
+  .question-options {
+    padding-left: 20px;
+    
+    .option-item {
+      padding: 8px 0;
+      font-size: 14px;
+      color: #606266;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+      
+      &:hover {
+        background-color: #f5f7fa;
+      }
+      
+      &.selected {
+        color: #409eff;
+        font-weight: 500;
+      }
+      
+      &.correct {
+        color: #67c23a;
+        background-color: #f0f9eb;
+      }
+      
+      &.wrong {
+        color: #f56c6c;
+        background-color: #fef0f0;
+      }
+    }
+  }
+  
+  .question-answer {
+    margin-top: 12px;
+    padding: 12px;
+    background: #f0f9eb;
+    border-radius: 4px;
+    border-left: 3px solid #67c23a;
+    
+    .answer-label {
+      font-weight: 600;
+      color: #67c23a;
+      margin-bottom: 4px;
+    }
+    
+    .answer-value {
+      color: #303133;
+    }
+  }
+  
+  .question-explanation {
+    margin-top: 12px;
+    padding: 12px;
+    background: #ecf5ff;
+    border-radius: 4px;
+    border-left: 3px solid #409eff;
+    font-size: 14px;
+    color: #606266;
+    line-height: 1.6;
+  }
+}
+
+// 统计卡片
+.stat-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  color: #fff;
+  
+  &.green {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  }
+  
+  &.orange {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+  
+  &.blue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+  
+  .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  
+  .stat-label {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+}

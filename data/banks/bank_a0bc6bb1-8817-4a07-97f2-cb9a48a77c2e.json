@@ -1,0 +1,286 @@
+{
+  "id": "a0bc6bb1-8817-4a07-97f2-cb9a48a77c2e",
+  "name": "英语",
+  "description": "",
+  "subject": "",
+  "questions": [
+    {
+      "id": "5a56f68a-2417-4d0a-9c21-ae8749faebcd",
+      "type": "single",
+      "question": "Which of the following sentences correctly uses a gerund?",
+      "options": [
+        "A. She enjoys to swim in the morning.",
+        "B. He decided going to the party.",
+        "C. They avoid eating junk food.",
+        "D. We like play basketball."
+      ],
+      "answer": "C",
+      "explanation": "A gerund is a verb form ending in -ing that functions as a noun. 'Eating' is a gerund in this sentence, correctly following the verb 'avoid'.",
+      "difficulty": 2,
+      "tags": [],
+      "created_at": "2025-12-26 22:11:14",
+      "updated_at": "2025-12-26 22:11:14",
+      "source": "ai_generated"
+    },
+    {
+      "id": "23fdd3d6-37c5-4b36-bcad-fbe44bc6a920",
+      "type": "multiple",
+      "question": "Which of the following verbs are typically followed by a gerund? (Select all that apply)",
+      "options": [
+        "A. enjoy",
+        "B. decide",
+        "C. suggest",
+        "D. finish"
+      ],
+      "answer": [
+        "A. enjoy",
+        "C. suggest",
+        "D. finish",
+        "A",
+        "C",
+        "D"
+      ],
+      "explanation": "Verbs like 'enjoy', 'suggest', and 'finish' are commonly followed by gerunds, while 'decide' is typically followed by an infinitive.",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-26 22:11:14",
+      "updated_at": "2025-12-26 22:11:14",
+      "source": "ai_generated"
+    },
+    {
+      "id": "cda2744c-e413-4860-a159-fb6b277517d1",
+      "type": "judge",
+      "question": "In the sentence 'Running is good exercise', 'Running' is a gerund.",
+      "options": [],
+      "answer": true,
+      "explanation": "'Running' is a gerund in this sentence because it is a verb form ending in -ing that functions as the subject of the sentence.",
+      "difficulty": 2,
+      "tags": [],
+      "created_at": "2025-12-26 22:11:14",
+      "updated_at": "2025-12-26 22:11:14",
+      "source": "ai_generated"
+    },
+    {
+      "id": "f8ec5979-63a5-4315-be33-93f596ae9d22",
+      "type": "single",
+      "question": "What is the gerund in the sentence: 'She is considering moving to a new city'?",
+      "options": [
+        "A. considering",
+        "B. moving",
+        "C. to",
+        "D. city"
+      ],
+      "answer": "B",
+      "explanation": "'Moving' is the gerund in this sentence, as it is the -ing form of the verb that functions as the object of the verb 'considering'.",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-26 22:11:14",
+      "updated_at": "2025-12-26 22:11:14",
+      "source": "ai_generated"
+    },
+    {
+      "id": "3ad949ab-7695-44a6-849c-22f57586dce6",
+      "type": "多选题",
+      "question": "Which of the following sentences contain gerunds? (Select all that apply)",
+      "options": [
+        "A. I love reading books.",
+        "B. He wants to go home.",
+        "C. They discussed traveling abroad.",
+        "D. She is happy to help."
+      ],
+      "answer": [
+        "A. I love reading books.",
+        "C. They discussed traveling abroad."
+      ],
+      "explanation": "'Reading' and 'traveling' are gerunds in these sentences, functioning as objects of the verbs 'love' and 'discussed' respectively.",
+      "difficulty": 4,
+      "tags": [],
+      "created_at": "2025-12-26 22:11:14",
+      "updated_at": "2025-12-26 22:11:14",
+      "source": "ai_generated"
+    },
+    {
+      "id": "41043c64-b9a6-42c3-bb8f-bdf8249b181d",
+      "type": "单选题",
+      "question": "Which of the following sentences contains an adverbial of time?",
+      "options": [
+        "A. She speaks English fluently.",
+        "B. They went to the park yesterday.",
+        "C. He is a very talented musician.",
+        "D. The book on the table is mine."
+      ],
+      "answer": "B",
+      "explanation": "The word 'yesterday' functions as an adverbial of time, indicating when the action took place.",
+      "difficulty": 2,
+      "tags": [],
+      "created_at": "2025-12-26 22:12:49",
+      "updated_at": "2025-12-26 22:12:49",
+      "source": "ai_generated"
+    },
+    {
+      "id": "a029ad02-3c22-4a7d-9f7b-153b5d1590f4",
+      "type": "单选题",
+      "question": "Identify the adverbial phrase in the sentence: 'She ran with great speed.'",
+      "options": [
+        "A. She ran",
+        "B. with great speed",
+        "C. great speed",
+        "D. ran with"
+      ],
+      "answer": "B",
+      "explanation": "'With great speed' is an adverbial phrase modifying the verb 'ran', describing how she ran.",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-26 22:12:49",
+      "updated_at": "2025-12-26 22:12:49",
+      "source": "ai_generated"
+    },
+    {
+      "id": "039bcdb3-cec0-43f1-adcf-ad80c8085ba4",
+      "type": "多选题",
+      "question": "Which of the following are adverbials of place? (Select all that apply)",
+      "options": [
+        "A. here",
+        "B. quickly",
+        "C. upstairs",
+        "D. very"
+      ],
+      "answer": [
+        "A",
+        "C"
+      ],
+      "explanation": "'Here' and 'upstairs' are adverbials of place, indicating location. 'Quickly' is an adverbial of manner, and 'very' is an adverb of degree.",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-26 22:12:49",
+      "updated_at": "2025-12-26 22:12:49",
+      "source": "ai_generated"
+    },
+    {
+      "id": "0a95bff6-499d-4a18-b69f-50ec67397d79",
+      "type": "判断题",
+      "question": "In the sentence 'He speaks quite loudly,' 'quite loudly' is an adverbial phrase.",
+      "options": [
+        "A. True",
+        "B. False"
+      ],
+      "answer": "A",
+      "explanation": "'Quite loudly' modifies the verb 'speaks' and functions as an adverbial phrase describing how he speaks.",
+      "difficulty": 2,
+      "tags": [],
+      "created_at": "2025-12-26 22:12:49",
+      "updated_at": "2025-12-26 22:12:49",
+      "source": "ai_generated"
+    },
+    {
+      "id": "70a5a740-0df3-4cb3-89a6-1fd148733dc2",
+      "type": "单选题",
+      "question": "Which sentence correctly uses an adverbial clause?",
+      "options": [
+        "A. Although it was raining, we went out.",
+        "B. The blue car is fast.",
+        "C. She is extremely happy.",
+        "D. They arrived early."
+      ],
+      "answer": "A",
+      "explanation": "'Although it was raining' is an adverbial clause providing a condition for the main clause.",
+      "difficulty": 4,
+      "tags": [],
+      "created_at": "2025-12-26 22:12:49",
+      "updated_at": "2025-12-26 22:12:49",
+      "source": "ai_generated"
+    },
+    {
+      "id": "b1e52ad2-073e-431b-822d-b01013cc5d56",
+      "type": "多选题",
+      "question": "Which of the following can function as adverbials? (Select all that apply)",
+      "options": [
+        "A. single adverbs",
+        "B. prepositional phrases",
+        "C. noun phrases",
+        "D. clauses"
+      ],
+      "answer": [
+        "A",
+        "B",
+        "D"
+      ],
+      "explanation": "Adverbials can be single adverbs, prepositional phrases, or clauses. Noun phrases typically do not function as adverbials.",
+      "difficulty": 4,
+      "tags": [],
+      "created_at": "2025-12-26 22:12:49",
+      "updated_at": "2025-12-26 22:12:49",
+      "source": "ai_generated"
+    },
+    {
+      "id": "8a6f667b-1bea-42b5-9b63-5428b1ef520e",
+      "type": "判断题",
+      "question": "In the sentence 'I will call you tomorrow,' 'tomorrow' is an adverbial of frequency.",
+      "options": [
+        "A. True",
+        "B. False"
+      ],
+      "answer": "B",
+      "explanation": "'Tomorrow' is an adverbial of time, not frequency. Adverbials of frequency answer 'how often?' (e.g., always, often, never).",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-26 22:12:49",
+      "updated_at": "2025-12-26 22:12:49",
+      "source": "ai_generated"
+    },
+    {
+      "id": "63c36b39-347f-420a-a424-9a6a322854dc",
+      "type": "单选题",
+      "question": "What type of adverbial is 'for two hours' in the sentence 'They waited for two hours'?",
+      "options": [
+        "A. time",
+        "B. place",
+        "C. manner",
+        "D. reason"
+      ],
+      "answer": "A",
+      "explanation": "'For two hours' indicates duration, which is a type of adverbial of time.",
+      "difficulty": 3,
+      "tags": [],
+      "created_at": "2025-12-26 22:12:49",
+      "updated_at": "2025-12-26 22:12:49",
+      "source": "ai_generated"
+    },
+    {
+      "id": "5de38a13-efeb-473d-b292-5fb0e60f37da",
+      "type": "单选题",
+      "question": "Which sentence contains an adverbial of purpose?",
+      "options": [
+        "A. She left early to catch the train.",
+        "B. He ran quickly.",
+        "C. They live nearby.",
+        "D. The meeting was very long."
+      ],
+      "answer": "A",
+      "explanation": "'To catch the train' expresses the purpose of leaving early, making it an adverbial of purpose.",
+      "difficulty": 4,
+      "tags": [],
+      "created_at": "2025-12-26 22:12:49",
+      "updated_at": "2025-12-26 22:12:49",
+      "source": "ai_generated"
+    },
+    {
+      "id": "25c595ba-66d5-40e7-87c4-c80e299f7b54",
+      "type": "判断题",
+      "question": "All adverbs function as adverbials in a sentence.",
+      "options": [
+        "A. True",
+        "B. False"
+      ],
+      "answer": "B",
+      "explanation": "While many adverbs function as adverbials, some adverbs modify adjectives or other adverbs (e.g., 'very' in 'very happy').",
+      "difficulty": 4,
+      "tags": [],
+      "created_at": "2025-12-26 22:12:49",
+      "updated_at": "2025-12-26 22:12:49",
+      "source": "ai_generated"
+    }
+  ],
+  "created_at": "2025-12-26 22:10:43",
+  "updated_at": "2025-12-27 01:16:01"
+}

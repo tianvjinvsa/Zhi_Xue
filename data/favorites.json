@@ -1,0 +1,44 @@
+{
+  "favorites": [
+    {
+      "id": "4082599e-e9f4-41d9-a5cf-5557befdd323",
+      "question_id": "5fe3eabc-53b8-408d-8681-840d24abcbf6",
+      "bank_id": "301e80c0-6b75-447b-8297-13d0069d9388",
+      "bank_name": "习近平新时代中国特色社会主义概论",
+      "question_type": "single",
+      "question_content": "9. 党的（ ）指出，党确立习近平同志党中央的核心、全党的核心地位，确立习近平新时代中国特色社会主义思想的指导地位。",
+      "options": [
+        "A. 党的十八届五中全会",
+        "B. 党的十九届六中全会",
+        "C. 党的十九届五中全会",
+        "D. 党的二十届二中全会"
+      ],
+      "answer": "B",
+      "explanation": "",
+      "difficulty": 3,
+      "tags": [],
+      "favorite_time": "2025-12-26 22:46:16",
+      "note": ""
+    },
+    {
+      "id": "a8b4b559-ecbe-40a4-a6f5-7208f5e660cd",
+      "question_id": "5a56f68a-2417-4d0a-9c21-ae8749faebcd",
+      "bank_id": "a0bc6bb1-8817-4a07-97f2-cb9a48a77c2e",
+      "bank_name": "英语",
+      "question_type": "single",
+      "question_content": "Which of the following sentences correctly uses a gerund?",
+      "options": [
+        "A. She enjoys to swim in the morning.",
+        "B. He decided going to the party.",
+        "C. They avoid eating junk food.",
+        "D. We like play basketball."
+      ],
+      "answer": "C",
+      "explanation": "A gerund is a verb form ending in -ing that functions as a noun. 'Eating' is a gerund in this sentence, correctly following the verb 'avoid'.",
+      "difficulty": 2,
+      "tags": [],
+      "favorite_time": "2025-12-27 01:18:28",
+      "note": ""
+    }
+  ]
+}

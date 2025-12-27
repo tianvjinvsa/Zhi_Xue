@@ -1,0 +1,28 @@
+# 智题坊依赖列表
+
+# GUI框架 (选择PySide6，LGPL协议更友好)
+PySide6>=6.6.0
+
+# 数据处理
+pandas>=2.0.0
+openpyxl>=3.1.0  # Excel文件支持
+python-docx>=1.1.0  # Word文档支持
+
+# AI接口
+openai>=1.6.0
+httpx>=0.25.0
+
+# Web框架 (文件上传支持)
+python-multipart>=0.0.6
+
+# 图片处理
+Pillow>=10.0.0
+
+# 加密存储
+cryptography>=41.0.0
+
+# 工具库
+uuid6>=2024.1.12
+
+# 打包工具 (开发时安装)
+# pyinstaller>=6.0.0

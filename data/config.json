@@ -1,0 +1,25 @@
+{
+  "ai": {
+    "api_provider": "custom",
+    "api_key": "",
+    "api_base_url": "",
+    "model": "",
+    "vision_model": "",
+    "max_tokens": 4096,
+    "temperature": 0.3
+  },
+  "app": {
+    "theme": "light",
+    "language": "zh_CN",
+    "auto_save": true,
+    "show_answer_immediately": false,
+    "default_time_limit": 60,
+    "multiple_partial_score": true
+  },
+  "paths": {
+    "banks_dir": "f:\\CodeAritist\\Program\\AnswerSystem\\data\\banks",
+    "papers_dir": "f:\\CodeAritist\\Program\\AnswerSystem\\data\\papers",
+    "results_dir": "f:\\CodeAritist\\Program\\AnswerSystem\\data\\results",
+    "favorites_file": "f:\\CodeAritist\\Program\\AnswerSystem\\data\\favorites.json"
+  }
+}
