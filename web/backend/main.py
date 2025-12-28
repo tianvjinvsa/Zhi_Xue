@@ -93,6 +93,10 @@ class QuestionUpdate(BaseModel):
     tags: Optional[List[str]] = None
 
 
+class BatchQuestionCreate(BaseModel):
+    questions: List[QuestionCreate]
+
+
 class BankCreate(BaseModel):
     name: str
     description: str = ""
@@ -252,6 +256,26 @@ def add_question(bank_id: str, data: QuestionCreate):
     if bank_service.add_question_to_bank(bank_id, question):
         return {"id": question.id, "message": "添加成功"}
     raise HTTPException(status_code=400, detail="添加失败")
+
+
+@app.post("/api/banks/{bank_id}/questions/batch")
+def batch_add_questions(bank_id: str, data: BatchQuestionCreate):
+    """批量向题库添加题目"""
+    count = 0
+    for q_data in data.questions:
+        question = Question(
+            type=q_data.type,
+            question=q_data.question,
+            options=q_data.options,
+            answer=q_data.answer,
+            explanation=q_data.explanation,
+            difficulty=q_data.difficulty,
+            tags=q_data.tags
+        )
+        if bank_service.add_question_to_bank(bank_id, question):
+            count += 1
+    
+    return {"count": count, "message": f"成功添加 {count} 道题目"}
 
 
 @app.put("/api/banks/{bank_id}/questions/{question_id}")
@@ -938,24 +962,22 @@ def import_data(data: ImportRequest):
                 try:
                     with open(bank_file, 'r', encoding='utf-8') as f:
                         bank_data = json.load(f)
-                    # 创建新题库
-                    bank = bank_service.create_bank(
-                        name=bank_data.get("name", "导入的题库"),
-                        description=bank_data.get("description", ""),
-                        subject=bank_data.get("subject", "")
-                    )
-                    # 添加题目
-                    for q_data in bank_data.get("questions", []):
-                        question = Question(
-                            type=q_data.get("type", "single"),
-                            question=q_data.get("question", ""),
-                            options=q_data.get("options", []),
-                            answer=q_data.get("answer", ""),
-                            explanation=q_data.get("explanation", ""),
-                            difficulty=q_data.get("difficulty", 3),
-                            tags=q_data.get("tags", [])
-                        )
-                        bank_service.add_question_to_bank(bank.id, question)
+                    
+                    # 尝试保留原始 ID 以维持试卷关联
+                    bank = QuestionBank.from_dict(bank_data)
+                    bank_service._save_bank(bank)
+                    
+                    # 更新元数据
+                    meta = bank_service._load_meta()
+                    meta[bank.id] = {
+                        'name': bank.name,
+                        'description': bank.description,
+                        'subject': bank.subject,
+                        'question_count': len(bank.questions),
+                        'created_at': bank.created_at,
+                        'updated_at': bank.updated_at
+                    }
+                    bank_service._save_meta(meta)
                     count += 1
                 except Exception as e:
                     errors.append(f"导入题库失败 ({bank_file.name}): {str(e)}")

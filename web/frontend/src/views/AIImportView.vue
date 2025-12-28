@@ -240,8 +240,8 @@ B. 选项二
                 <strong>正确答案：</strong>
                 <span class="answer-text">{{ formatAnswer(question) }}</span>
               </div>
-              <div v-if="question.analysis" class="q-analysis">
-                <strong>解析：</strong>{{ question.analysis }}
+              <div v-if="question.explanation" class="q-analysis">
+                <strong>解析：</strong>{{ question.explanation }}
               </div>
             </div>
           </div>
@@ -324,7 +324,7 @@ B. 选项二
         </el-form-item>
         
         <el-form-item label="题目解析">
-          <el-input v-model="editingQuestion.analysis" type="textarea" :rows="2" />
+          <el-input v-model="editingQuestion.explanation" type="textarea" :rows="2" />
         </el-form-item>
         <el-form-item label="难度">
           <el-rate v-model="editingQuestion.difficulty" />

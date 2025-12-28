@@ -181,9 +181,9 @@
                 <strong>正确答案：</strong>
                 <span class="answer-text">{{ formatAnswer(fav) }}</span>
               </div>
-              <div v-if="fav.analysis" class="analysis-row">
+              <div v-if="fav.explanation" class="analysis-row">
                 <strong>解析：</strong>
-                <p>{{ fav.analysis }}</p>
+                <p>{{ fav.explanation }}</p>
               </div>
               <div v-if="fav.note" class="note-row">
                 <strong>我的笔记：</strong>
