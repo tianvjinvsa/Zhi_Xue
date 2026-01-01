@@ -58,6 +58,26 @@
                 </el-checkbox>
               </el-checkbox-group>
             </el-form-item>
+
+            <el-form-item label="章节筛选" v-if="form.bank_ids.length > 0">
+              <el-select
+                v-model="form.chapters"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                placeholder="不选则包含所有章节"
+                style="width: 100%"
+                :loading="loadingChapters"
+              >
+                <el-option
+                  v-for="chapter in allChapters"
+                  :key="chapter"
+                  :label="chapter"
+                  :value="chapter"
+                />
+              </el-select>
+              <span class="form-hint">从所选题库中筛选特定章节（留空则使用全部）</span>
+            </el-form-item>
             
             <el-divider content-position="left">
               <el-icon><List /></el-icon> 题目数量
@@ -205,7 +225,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { bankApi, paperApi } from '@/api'
@@ -230,6 +250,7 @@ const form = ref({
   description: '',
   time_limit: 60,
   bank_ids: [],
+  chapters: [],
   single_count: 10,
   multiple_count: 5,
   judge_count: 5,
@@ -292,6 +313,52 @@ const generatePaper = async () => {
     }
   })
 }
+
+// 章节相关逻辑
+const bankDetails = ref({})
+const loadingChapters = ref(false)
+
+const allChapters = computed(() => {
+  const chapters = new Set()
+  form.value.bank_ids.forEach(id => {
+    const bank = bankDetails.value[id]
+    if (bank && bank.chapters) {
+      bank.chapters.forEach(c => {
+        if (c) chapters.add(c)
+      })
+    }
+  })
+  return Array.from(chapters).sort()
+})
+
+watch(() => form.value.bank_ids, async (newIds) => {
+  if (newIds.length === 0) {
+    form.value.chapters = []
+    return
+  }
+
+  loadingChapters.value = true
+  try {
+    for (const id of newIds) {
+      if (!bankDetails.value[id]) {
+        const bank = await bankApi.get(id)
+        bankDetails.value[id] = bank
+      }
+    }
+    
+    // 过滤掉不再有效的章节选择
+    // 使用 setTimeout 确保 allChapters 已更新
+    setTimeout(() => {
+      const available = new Set(allChapters.value)
+      form.value.chapters = form.value.chapters.filter(c => available.has(c))
+    }, 0)
+    
+  } catch (error) {
+    console.error('获取题库详情失败:', error)
+  } finally {
+    loadingChapters.value = false
+  }
+}, { deep: true })
 
 onMounted(() => {
   fetchBanks()

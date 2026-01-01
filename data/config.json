@@ -1,7 +1,7 @@
 {
   "ai": {
     "api_provider": "custom",
-    "api_key": "gAAAAABpVflQebesocJiDZ_75AJNmBQhVU_AurVQFSGdGc8uz3yDCntvCDuvGs6w4XCqK35t7iy_oljsUcMfHpz21UTuVmOi9mNO5muXHIRqLeL5B7X6U3-pRgwVhTio44SZ9U_eM0Ha",
+    "api_key": "",
     "api_base_url": "https://ark.cn-beijing.volces.com/api/v3/",
     "model": "deepseek-v3-2-251201",
     "vision_model": "doubao-1-5-vision-pro-32k-250115",

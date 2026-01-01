@@ -129,6 +129,7 @@ class PaperGenerateRequest(BaseModel):
     min_difficulty: int = 1
     max_difficulty: int = 5
     tags: List[str] = []
+    chapters: List[str] = []  # 章节筛选
     score_rules: Optional[Dict[str, float]] = None
 
 
@@ -422,6 +423,7 @@ def generate_paper(data: PaperGenerateRequest):
         min_difficulty=data.min_difficulty,
         max_difficulty=data.max_difficulty,
         tags=data.tags,
+        chapters=data.chapters,
         score_rules=data.score_rules
     )
     
@@ -441,6 +443,21 @@ def delete_paper(paper_id: str):
 
 
 # ============ 考试 API ============
+
+@app.get("/api/exam/in-progress")
+def get_in_progress_exam():
+    """获取当前进行中的考试"""
+    result = exam_service.find_any_in_progress_exam()
+    if not result:
+        return {"has_in_progress": False}
+    return {
+        "has_in_progress": True,
+        "exam_id": result.id,
+        "paper_id": result.paper_id,
+        "paper_title": result.paper_title,
+        "total_score": result.total_score
+    }
+
 
 @app.post("/api/exam/start/{paper_id}")
 def start_exam(paper_id: str):
@@ -477,12 +494,14 @@ def get_all_results():
     results = exam_service.get_all_results()
     return [{
         "id": r.id,
+        "paper_id": r.paper_id,
         "paper_title": r.paper_title,
         "user_score": r.user_score,
         "total_score": r.total_score,
         "start_time": r.start_time,
         "end_time": r.end_time,
-        "status": r.status
+        "status": r.status,
+        "source_banks": r.source_banks if hasattr(r, 'source_banks') else []
     } for r in results]
 
 

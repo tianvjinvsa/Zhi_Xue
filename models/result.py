@@ -34,11 +34,14 @@ class ExamResult:
     user_score: float = 0.0
     details: List[QuestionResult] = field(default_factory=list)
     status: str = "in_progress"  # in_progress, completed, timeout
+    source_banks: List[str] = field(default_factory=list)  # 来源题库ID列表
     
     def __post_init__(self):
         """初始化后处理"""
         if self.details is None:
             self.details = []
+        if self.source_banks is None:
+            self.source_banks = []
     
     def to_dict(self) -> dict:
         """转换为字典"""
@@ -52,7 +55,8 @@ class ExamResult:
             'total_score': self.total_score,
             'user_score': self.user_score,
             'details': [asdict(d) if isinstance(d, QuestionResult) else d for d in self.details],
-            'status': self.status
+            'status': self.status,
+            'source_banks': self.source_banks
         }
         return data
     
@@ -62,7 +66,7 @@ class ExamResult:
         details_data = data.pop('details', [])
         
         valid_fields = ['id', 'paper_id', 'paper_title', 'user_id', 'start_time', 
-                       'end_time', 'total_score', 'user_score', 'status']
+                       'end_time', 'total_score', 'user_score', 'status', 'source_banks']
         result_data = {k: v for k, v in data.items() if k in valid_fields}
         
         result = cls(**result_data)

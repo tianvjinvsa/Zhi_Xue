@@ -61,6 +61,7 @@ export const examApi = {
   start: (paperId) => api.post(`/exam/start/${paperId}`),
   submitAnswer: (examId, data) => api.post(`/exam/${examId}/answer`, data),
   finish: (examId) => api.post(`/exam/${examId}/submit`),
+  getInProgress: () => api.get("/exam/in-progress"),
 };
 
 // ============ 结果 API ============

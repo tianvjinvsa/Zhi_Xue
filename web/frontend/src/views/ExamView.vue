@@ -196,7 +196,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Clock, Star, StarFilled, Check, Close, 
@@ -208,6 +208,7 @@ const route = useRoute()
 const router = useRouter()
 const paperId = route.params.paperId
 
+const isSubmitting = ref(false)
 const loading = ref(true)
 const paper = ref(null)
 const questions = ref([])
@@ -328,13 +329,7 @@ const scrollToQuestion = (index) => {
 }
 
 const confirmExit = () => {
-  ElMessageBox.confirm('考试正在进行中，确定要退出吗？进度将被保存。', '提示', {
-    confirmButtonText: '确定退出',
-    cancelButtonText: '继续答题',
-    type: 'warning'
-  }).then(() => {
-    router.push('/exam')
-  }).catch(() => {})
+  router.push('/exam')
 }
 
 const confirmSubmit = async () => {
@@ -359,6 +354,7 @@ const confirmSubmit = async () => {
 }
 
 const submitExam = async () => {
+  isSubmitting.value = true
   loading.value = true
   try {
     const result = await examApi.finish(examId.value)
@@ -366,6 +362,7 @@ const submitExam = async () => {
     ElMessage.success('交卷成功！')
     router.push(`/results/${result.id}`)
   } catch (error) {
+    isSubmitting.value = false
     console.error('交卷失败:', error)
     loading.value = false
   }
@@ -475,6 +472,24 @@ const toggleFavorite = async (question) => {
     console.error('收藏操作失败:', error)
   }
 }
+
+onBeforeRouteLeave((to, from, next) => {
+  if (isSubmitting.value) {
+    next()
+    return
+  }
+  
+  ElMessageBox.confirm('退出考试将自动交卷，确定要退出吗？', '提示', {
+    confirmButtonText: '确定交卷并退出',
+    cancelButtonText: '继续答题',
+    type: 'warning'
+  }).then(() => {
+    next(false)
+    submitExam()
+  }).catch(() => {
+    next(false)
+  })
+})
 
 onMounted(() => {
   initExam()

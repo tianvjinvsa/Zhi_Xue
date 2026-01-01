@@ -38,24 +38,38 @@
             </el-form-item>
             
             <el-form-item label="视觉模型">
-              <el-input v-model="aiConfig.visionModel" placeholder="gpt-4-vision-preview" />
+                  <el-input v-model="aiConfig.visionModel" placeholder="gpt-4-vision-preview" />
+                  <div class="form-tip">用于解析图片题目的模型</div>
             </el-form-item>
+            <!-- 高级设置折叠区域 -->
+            <el-collapse v-model="advancedExpanded" class="advanced-settings">
+              <el-collapse-item name="advanced">
+                <template #title>
+                  <span class="advanced-title">
+                    <el-icon><Tools /></el-icon>
+                    高级设置
+                  </span>
+                </template>
+                
+                <el-form-item label="Temperature">
+                  <el-slider 
+                    v-model="aiConfig.temperature" 
+                    :min="0" 
+                    :max="2" 
+                    :step="0.1"
+                    show-input
+                  />
+                  <div class="form-tip">控制生成内容的随机性，值越高越随机</div>
+                </el-form-item>
+                
+                <el-form-item label="Max Tokens">
+                  <el-input-number v-model="aiConfig.maxTokens" :min="100" :max="8000" />
+                  <div class="form-tip">单次生成的最大Token数量</div>
+                </el-form-item>
+              </el-collapse-item>
+            </el-collapse>
             
-            <el-form-item label="Temperature">
-              <el-slider 
-                v-model="aiConfig.temperature" 
-                :min="0" 
-                :max="2" 
-                :step="0.1"
-                show-input
-              />
-            </el-form-item>
-            
-            <el-form-item label="Max Tokens">
-              <el-input-number v-model="aiConfig.maxTokens" :min="100" :max="8000" />
-            </el-form-item>
-            
-            <el-form-item>
+            <el-form-item style="margin-top: 16px;">
               <el-button type="primary" @click="saveAIConfig" :loading="saving">
                 保存配置
               </el-button>
@@ -326,6 +340,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Tools } from '@element-plus/icons-vue'
 import { aiApi, configApi, systemApi, dataApi } from '@/api'
 
 const router = useRouter()
@@ -336,6 +351,7 @@ const connectionStatus = ref(false)
 const checkingUpdate = ref(false)
 const currentVersion = ref('')
 const updateInfo = ref(null)
+const advancedExpanded = ref([])  // 高级设置折叠状态
 
 // 导出相关
 const exportDialogVisible = ref(false)
@@ -737,6 +753,49 @@ onMounted(async () => {
       .el-icon {
         margin-right: 4px;
       }
+    }
+  }
+  
+  .advanced-settings {
+    margin: 16px 0;
+    border: none;
+    
+    :deep(.el-collapse-item__header) {
+      background: #f5f7fa;
+      border-radius: 4px;
+      padding: 0 12px;
+      height: 40px;
+      line-height: 40px;
+      border: none;
+      
+      &.is-active {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+    }
+    
+    :deep(.el-collapse-item__wrap) {
+      border: 1px solid #e4e7ed;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+    }
+    
+    :deep(.el-collapse-item__content) {
+      padding: 16px;
+    }
+    
+    .advanced-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #606266;
+      font-size: 14px;
+    }
+    
+    .form-tip {
+      font-size: 12px;
+      color: #909399;
+      margin-top: 4px;
     }
   }
   

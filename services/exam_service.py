@@ -90,7 +90,8 @@ class ExamService:
             paper_id=paper_id,
             paper_title=paper.title,
             total_score=paper.total_score,
-            status="in_progress"
+            status="in_progress",
+            source_banks=paper.source_banks if paper.source_banks else []
         )
         
         # 初始化每道题的结果记录 - 按打乱后的顺序
@@ -116,6 +117,19 @@ class ExamService:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 if data.get('paper_id') == paper_id and data.get('status') == 'in_progress':
+                    return ExamResult.from_dict(data)
+            except:
+                continue
+        return None
+    
+    def find_any_in_progress_exam(self) -> Optional[ExamResult]:
+        """查找任意一个进行中的考试"""
+        results_dir = self._get_results_dir()
+        for file_path in results_dir.glob("result_*.json"):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                if data.get('status') == 'in_progress':
                     return ExamResult.from_dict(data)
             except:
                 continue
@@ -263,7 +277,19 @@ class ExamService:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            return ExamResult.from_dict(data)
+            result = ExamResult.from_dict(data)
+            
+            # 兼容旧数据
+            if not result.source_banks and result.paper_id:
+                paper = self.paper_service.get_paper(result.paper_id)
+                if paper and paper.source_banks:
+                    result.source_banks = paper.source_banks
+                    try:
+                        self._save_result(result)
+                    except:
+                        pass
+            
+            return result
         except Exception as e:
             print(f"加载答题结果失败: {e}")
             return None
@@ -276,7 +302,20 @@ class ExamService:
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
-                results.append(ExamResult.from_dict(data))
+                result = ExamResult.from_dict(data)
+                
+                # 兼容旧数据：如果source_banks为空，尝试从试卷获取
+                if not result.source_banks and result.paper_id:
+                    paper = self.paper_service.get_paper(result.paper_id)
+                    if paper and paper.source_banks:
+                        result.source_banks = paper.source_banks
+                        # 回写修复数据，避免下次再次读取
+                        try:
+                            self._save_result(result)
+                        except:
+                            pass
+                
+                results.append(result)
             except:
                 continue
         return sorted(results, key=lambda r: r.start_time, reverse=True)

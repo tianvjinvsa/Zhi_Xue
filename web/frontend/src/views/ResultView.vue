@@ -150,31 +150,22 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { resultApi, paperApi, bankApi } from '@/api'
+import { resultApi, bankApi } from '@/api'
 import { DataAnalysis, Document, Refresh, PieChart, Trophy, Timer } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const loading = ref(false)
 const results = ref([])
-const papers = ref([])
 const allBanks = ref([])
 const filterBank = ref('')
-
-// 建立 paper_id 到 source_banks 的映射
-const paperBanksMap = computed(() => {
-  const map = {}
-  papers.value.forEach(paper => {
-    map[paper.id] = paper.source_banks || []
-  })
-  return map
-})
 
 // 计算相关题库（只显示成绩中涉及的题库）
 const relatedBanks = computed(() => {
   const bankIds = new Set()
   results.value.forEach(result => {
-    const sourceBanks = paperBanksMap.value[result.paper_id] || []
-    sourceBanks.forEach(bankId => bankIds.add(bankId))
+    if (result.source_banks && result.source_banks.length > 0) {
+      result.source_banks.forEach(bankId => bankIds.add(bankId))
+    }
   })
   return allBanks.value.filter(b => bankIds.has(b.id))
 })
@@ -183,7 +174,7 @@ const relatedBanks = computed(() => {
 const filteredResults = computed(() => {
   if (!filterBank.value) return results.value
   return results.value.filter(result => {
-    const sourceBanks = paperBanksMap.value[result.paper_id] || []
+    const sourceBanks = result.source_banks || []
     return sourceBanks.includes(filterBank.value)
   })
 })
@@ -259,14 +250,6 @@ const fetchResults = async () => {
   }
 }
 
-const fetchPapers = async () => {
-  try {
-    papers.value = await paperApi.getAll()
-  } catch (error) {
-    console.error('获取试卷列表失败:', error)
-  }
-}
-
 const fetchBanks = async () => {
   try {
     allBanks.value = await bankApi.getAll()
@@ -291,7 +274,6 @@ const deleteResult = async (id) => {
 
 onMounted(() => {
   fetchResults()
-  fetchPapers()
   fetchBanks()
 })
 </script>

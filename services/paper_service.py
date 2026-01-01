@@ -26,6 +26,7 @@ class PaperGenerateConfig:
     min_difficulty: int = 1     # 最小难度
     max_difficulty: int = 5     # 最大难度
     tags: List[str] = None      # 标签筛选
+    chapters: List[str] = None  # 章节筛选
     score_rules: Dict[str, float] = None  # 分值规则
     shuffle_questions: bool = False  # 是否打乱题目顺序
     
@@ -34,6 +35,8 @@ class PaperGenerateConfig:
             self.bank_ids = []
         if self.tags is None:
             self.tags = []
+        if self.chapters is None:
+            self.chapters = []
         if self.score_rules is None:
             self.score_rules = {
                 "single": 5.0,
@@ -131,6 +134,9 @@ class PaperService:
                 # 标签筛选
                 if config.tags and not any(t in q.tags for t in config.tags):
                     continue
+                # 章节筛选
+                if config.chapters and q.chapter not in config.chapters:
+                    continue
                 
                 if q.type in all_questions:
                     all_questions[q.type].append(q)
@@ -143,9 +149,26 @@ class PaperService:
             'fill': config.fill_count
         }
         
+        # 获取题型中文名
+        type_names = {
+            'single': '单选题',
+            'multiple': '多选题',
+            'judge': '判断题',
+            'fill': '填空题'
+        }
+        
+        # 检查是否选择了章节但没有匹配的题目
+        total_required = sum(required.values())
+        total_available = sum(len(qs) for qs in all_questions.values())
+        
+        if config.chapters and total_required > 0 and total_available == 0:
+            return None, f"所选章节中没有任何题目，请重新选择章节或取消章节筛选"
+        
         for q_type, count in required.items():
             if count > 0 and len(all_questions[q_type]) < count:
-                return None, f"{q_type}类型题目不足，需要{count}道，实际只有{len(all_questions[q_type])}道"
+                type_name = type_names.get(q_type, q_type)
+                chapter_hint = "（在所选章节范围内）" if config.chapters else ""
+                return None, f"{type_name}不足{chapter_hint}，需要{count}道，实际只有{len(all_questions[q_type])}道"
         
         # 随机抽题
         paper = Paper(

@@ -169,9 +169,6 @@
               >
                 {{ fav.showAnswer ? '隐藏答案' : '查看答案' }}
               </el-button>
-              <el-button type="primary" link @click="editNote(fav)">
-                <el-icon><Edit /></el-icon>笔记
-              </el-button>
             </div>
           </div>
 
@@ -185,29 +182,11 @@
                 <strong>解析：</strong>
                 <p>{{ fav.explanation }}</p>
               </div>
-              <div v-if="fav.note" class="note-row">
-                <strong>我的笔记：</strong>
-                <p>{{ fav.note }}</p>
-              </div>
             </div>
           </el-collapse-transition>
         </el-card>
       </div>
     </div>
-
-    <!-- 笔记编辑对话框 -->
-    <el-dialog v-model="noteDialogVisible" title="编辑笔记" width="400px">
-      <el-input
-        v-model="editingNote"
-        type="textarea"
-        :rows="4"
-        placeholder="输入您的学习笔记或心得..."
-      />
-      <template #footer>
-        <el-button @click="noteDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveNote">保存</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -216,7 +195,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Star, StarFilled, Folder, Select, Finished, 
-  Check, EditPen, Clock, Delete, Edit 
+  Check, EditPen, Clock, Delete 
 } from '@element-plus/icons-vue'
 import { favoriteApi, bankApi } from '@/api'
 
@@ -225,11 +204,6 @@ const favorites = ref([])
 const banks = ref([])
 const statistics = ref(null)
 const filterBank = ref('')
-
-// 笔记编辑
-const noteDialogVisible = ref(false)
-const editingNote = ref('')
-const currentFav = ref(null)
 
 const getTypeName = (type) => {
   const names = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题' }
@@ -320,23 +294,6 @@ const clearAllFavorites = async () => {
     fetchFavorites()
   } catch (error) {
     ElMessage.error('操作失败')
-  }
-}
-
-const editNote = (fav) => {
-  currentFav.value = fav
-  editingNote.value = fav.note || ''
-  noteDialogVisible.value = true
-}
-
-const saveNote = async () => {
-  try {
-    await favoriteApi.updateNote(currentFav.value.question_id, editingNote.value)
-    ElMessage.success('笔记已保存')
-    noteDialogVisible.value = false
-    fetchFavorites()
-  } catch (error) {
-    ElMessage.error('保存失败')
   }
 }
 

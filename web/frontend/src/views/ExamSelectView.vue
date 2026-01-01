@@ -89,7 +89,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { paperApi, bankApi } from '@/api'
+import { paperApi, bankApi, examApi } from '@/api'
 import { Edit, Document, List, Coin, Clock, ArrowRight } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -136,13 +136,33 @@ const fetchBanks = async () => {
   }
 }
 
+// 检查是否有进行中的考试并自动跳转
+const checkInProgressExam = async () => {
+  try {
+    const result = await examApi.getInProgress()
+    if (result.has_in_progress) {
+      // 直接跳转到进行中的考试
+      router.push(`/exam/${result.paper_id}`)
+      return true
+    }
+  } catch (error) {
+    console.error('检查进行中考试失败:', error)
+  }
+  return false
+}
+
 const startExam = (paperId) => {
   router.push(`/exam/${paperId}`)
 }
 
-onMounted(() => {
-  fetchPapers()
-  fetchBanks()
+onMounted(async () => {
+  // 先检查是否有进行中的考试
+  const hasInProgress = await checkInProgressExam()
+  if (!hasInProgress) {
+    // 没有进行中的考试才加载列表
+    fetchPapers()
+    fetchBanks()
+  }
 })
 </script>
 
