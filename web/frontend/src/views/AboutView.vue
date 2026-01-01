@@ -64,7 +64,7 @@
           <div class="version-info">
             <div class="version-row">
               <span>当前版本</span>
-              <el-tag type="primary">v1.0.0</el-tag>
+              <el-tag type="primary">v2.0.0</el-tag>
             </div>
             <div class="version-row">
               <span>发布日期</span>

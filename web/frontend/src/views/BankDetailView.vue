@@ -19,28 +19,34 @@
 
     <!-- 题库统计 -->
     <el-row :gutter="20" class="stats-row">
-      <el-col :span="6">
+      <el-col :span="4">
         <div class="stat-card blue">
-          <div class="stat-value">{{ questions.length }}</div>
+          <div class="stat-value">{{ filteredQuestions.length }}</div>
           <div class="stat-label">总题目数</div>
         </div>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="5">
         <div class="stat-card green">
-          <div class="stat-value">{{ singleCount }}</div>
+          <div class="stat-value">{{ filteredSingleCount }}</div>
           <div class="stat-label">单选题</div>
         </div>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="5">
         <div class="stat-card">
-          <div class="stat-value">{{ multipleCount }}</div>
+          <div class="stat-value">{{ filteredMultipleCount }}</div>
           <div class="stat-label">多选题</div>
         </div>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="5">
         <div class="stat-card orange">
-          <div class="stat-value">{{ judgeCount }}</div>
+          <div class="stat-value">{{ filteredJudgeCount }}</div>
           <div class="stat-label">判断题</div>
+        </div>
+      </el-col>
+      <el-col :span="5">
+        <div class="stat-card purple">
+          <div class="stat-value">{{ filteredFillCount }}</div>
+          <div class="stat-label">填空题</div>
         </div>
       </el-col>
     </el-row>
@@ -71,67 +77,87 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
+        <span v-if="filteredQuestions.length > 0" class="result-count">
+          共 {{ filteredQuestions.length }} 道题目
+        </span>
       </div>
 
-      <div v-loading="loading" class="questions-list">
-        <div 
-          v-for="(question, index) in filteredQuestions" 
-          :key="question.id"
-          class="question-card"
-        >
-          <div class="question-header">
-            <div class="question-info">
-              <span class="question-number">{{ index + 1 }}</span>
-              <el-tag :class="['question-type-tag', question.type]" size="small">
-                {{ getTypeLabel(question.type) }}
-              </el-tag>
-              <el-tag v-if="question.chapter" type="info" size="small">
-                {{ question.chapter }}
-              </el-tag>
-              <div class="difficulty-stars">
-                <el-icon v-for="i in question.difficulty" :key="i"><Star /></el-icon>
+      <div v-loading="loading" class="questions-list" ref="scrollContainer">
+        <!-- 使用虚拟滚动优化大量题目渲染 -->
+        <template v-if="filteredQuestions.length > 0">
+          <div 
+            v-for="(question, index) in visibleQuestions" 
+            :key="question.id"
+            class="question-card"
+          >
+            <div class="question-header">
+              <div class="question-info">
+                <span class="question-number">{{ getQuestionIndex(index) }}</span>
+                <el-tag :class="['question-type-tag', question.type]" size="small">
+                  {{ getTypeLabel(question.type) }}
+                </el-tag>
+                <el-tag v-if="question.chapter" type="info" size="small">
+                  {{ question.chapter }}
+                </el-tag>
+                <div class="difficulty-stars">
+                  <el-icon v-for="i in question.difficulty" :key="i"><Star /></el-icon>
+                </div>
+              </div>
+              <div class="action-buttons">
+                <el-button 
+                  size="small" 
+                  :type="favoriteStatus[question.id] ? 'warning' : 'default'"
+                  @click="toggleFavorite(question)"
+                >
+                  <el-icon><Star /></el-icon>
+                  {{ favoriteStatus[question.id] ? '已收藏' : '收藏' }}
+                </el-button>
+                <el-button size="small" @click="showEditDialog(question)">编辑</el-button>
+                <el-popconfirm title="确定删除此题目？" @confirm="deleteQuestion(question.id)">
+                  <template #reference>
+                    <el-button size="small" type="danger">删除</el-button>
+                  </template>
+                </el-popconfirm>
               </div>
             </div>
-            <div class="action-buttons">
-              <el-button 
-                size="small" 
-                :type="favoriteStatus[question.id] ? 'warning' : 'default'"
-                @click="toggleFavorite(question)"
+            
+            <div class="question-content">{{ question.question }}</div>
+            
+            <div v-if="question.options && question.options.length" class="question-options">
+              <div 
+                v-for="option in question.options" 
+                :key="option" 
+                class="option-item"
+                :class="{ correct: isCorrectOption(question, option) }"
               >
-                <el-icon><Star /></el-icon>
-                {{ favoriteStatus[question.id] ? '已收藏' : '收藏' }}
-              </el-button>
-              <el-button size="small" @click="showEditDialog(question)">编辑</el-button>
-              <el-popconfirm title="确定删除此题目？" @confirm="deleteQuestion(question.id)">
-                <template #reference>
-                  <el-button size="small" type="danger">删除</el-button>
-                </template>
-              </el-popconfirm>
+                {{ option }}
+              </div>
+            </div>
+            
+            <div class="question-answer">
+              <div class="answer-label">✓ 正确答案</div>
+              <div class="answer-value">{{ formatAnswer(question) }}</div>
+            </div>
+            
+            <div v-if="question.explanation" class="question-explanation">
+              <strong>解析：</strong>{{ question.explanation }}
             </div>
           </div>
           
-          <div class="question-content">{{ question.question }}</div>
-          
-          <div v-if="question.options && question.options.length" class="question-options">
-            <div 
-              v-for="option in question.options" 
-              :key="option" 
-              class="option-item"
-              :class="{ correct: isCorrectOption(question, option) }"
-            >
-              {{ option }}
-            </div>
+          <!-- 分页控件 -->
+          <div v-if="totalPages > 1" class="pagination-wrapper">
+            <el-pagination
+              :current-page="currentPage"
+              :page-size="pageSize"
+              :total="filteredQuestions.length"
+              :page-sizes="[20, 50, 100]"
+              @update:current-page="handlePageChange"
+              @size-change="handleSizeChange"
+              layout="total, sizes, prev, pager, next, jumper"
+              background
+            />
           </div>
-          
-          <div class="question-answer">
-            <div class="answer-label">✓ 正确答案</div>
-            <div class="answer-value">{{ formatAnswer(question) }}</div>
-          </div>
-          
-          <div v-if="question.explanation" class="question-explanation">
-            <strong>解析：</strong>{{ question.explanation }}
-          </div>
-        </div>
+        </template>
 
         <div v-if="filteredQuestions.length === 0 && !loading" class="empty-state">
           <el-icon><Document /></el-icon>
@@ -300,10 +326,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete, Plus, Star, Search, FolderAdd } from '@element-plus/icons-vue'
+import { Delete, Plus, Star, Search, FolderAdd, Document } from '@element-plus/icons-vue'
 import { bankApi, favoriteApi } from '@/api'
 
 const route = useRoute()
@@ -329,6 +355,37 @@ const searchKeyword = ref('')
 const favoriteStatus = ref({})
 const chapters = ref([])
 
+// 分页相关
+const currentPage = ref(1)
+const pageSize = ref(20)
+const scrollContainer = ref(null)
+
+// 计算总页数
+const totalPages = computed(() => Math.ceil(filteredQuestions.value.length / pageSize.value))
+
+// 当前可见的题目（分页后）
+const visibleQuestions = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredQuestions.value.slice(start, end)
+})
+
+// 获取题目在筛选结果中的真实序号
+const getQuestionIndex = (index) => {
+  return (currentPage.value - 1) * pageSize.value + index + 1
+}
+
+// 处理分页大小变化
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+}
+
+// 处理页码变化
+const handlePageChange = (page) => {
+  currentPage.value = page
+}
+
 const questionForm = ref({
   type: 'single',
   question: '',
@@ -344,6 +401,11 @@ const questionForm = ref({
 const questionRules = {
   question: [{ required: true, message: '请输入题目内容', trigger: 'blur' }]
 }
+
+const filteredSingleCount = computed(() => filteredQuestions.value.filter(q => q.type === 'single').length)
+const filteredMultipleCount = computed(() => filteredQuestions.value.filter(q => q.type === 'multiple').length)
+const filteredJudgeCount = computed(() => filteredQuestions.value.filter(q => q.type === 'judge').length)
+const filteredFillCount = computed(() => filteredQuestions.value.filter(q => q.type === 'fill').length)
 
 const singleCount = computed(() => questions.value.filter(q => q.type === 'single').length)
 const multipleCount = computed(() => questions.value.filter(q => q.type === 'multiple').length)
@@ -363,6 +425,11 @@ const filteredQuestions = computed(() => {
     if (searchKeyword.value && !q.question.includes(searchKeyword.value)) return false
     return true
   })
+})
+
+// 监听筛选条件变化，重置到第一页
+watch([filterType, filterDifficulty, filterChapter, searchKeyword], () => {
+  currentPage.value = 1
 })
 
 const getTypeLabel = (type) => {
@@ -463,11 +530,17 @@ const deleteChapter = async (chapter) => {
 }
 
 const checkFavoriteStatus = async () => {
-  for (const question of questions.value) {
-    try {
-      const result = await favoriteApi.check(question.id)
-      favoriteStatus.value[question.id] = result.favorited
-    } catch (error) {
+  // 一次性获取所有已收藏的题目ID，避免逐个请求
+  try {
+    const result = await favoriteApi.getIds()
+    const favoritedSet = new Set(result.ids || [])
+    for (const question of questions.value) {
+      favoriteStatus.value[question.id] = favoritedSet.has(question.id)
+    }
+  } catch (error) {
+    console.error('获取收藏状态失败:', error)
+    // 出错时默认所有都未收藏
+    for (const question of questions.value) {
       favoriteStatus.value[question.id] = false
     }
   }
@@ -620,6 +693,22 @@ onMounted(() => {
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 1px solid #ebeef5;
+    flex-wrap: wrap;
+    align-items: center;
+    
+    .result-count {
+      margin-left: auto;
+      color: #909399;
+      font-size: 14px;
+    }
+  }
+  
+  .pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+    border-top: 1px solid #ebeef5;
+    margin-top: 20px;
   }
   
   .question-number {

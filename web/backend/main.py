@@ -5,12 +5,21 @@ import sys
 import os
 import tempfile
 import httpx
-import json
 import shutil
 import asyncio
 from pathlib import Path
 from datetime import datetime
 from asyncio.proactor_events import _ProactorBasePipeTransport
+
+# 使用高性能 JSON 库（比标准库快 10-50 倍）
+try:
+    import orjson
+    def json_loads(s): return orjson.loads(s)
+    def json_dumps(obj): return orjson.dumps(obj, option=orjson.OPT_INDENT_2).decode('utf-8')
+except ImportError:
+    import json
+    def json_loads(s): return json.loads(s)
+    def json_dumps(obj): return json.dumps(obj, ensure_ascii=False, indent=2)
 
 # 修复 Windows 下 asyncio 的 ConnectionResetError [WinError 10054]
 # 这通常发生在客户端强制关闭连接时，ProactorEventLoop 会抛出此异常
@@ -41,7 +50,7 @@ from services.favorite_service import FavoriteService
 from models import Question, QuestionBank
 
 # 当前版本号
-CURRENT_VERSION = "1.0.0"
+CURRENT_VERSION = "2.0.0"
 GITHUB_RELEASES_API = "https://api.github.com/repos/K-zhaochao/AnswerSystem/releases/latest"
 
 # 确保数据目录存在
@@ -284,12 +293,55 @@ def remove_chapter(bank_id: str, chapter_name: str):
 # ============ 题目 API ============
 
 @app.get("/api/banks/{bank_id}/questions")
-def get_bank_questions(bank_id: str):
-    """获取题库中的所有题目"""
+def get_bank_questions(
+    bank_id: str, 
+    page: int = 0,
+    page_size: int = 0,
+    type: str = "",
+    chapter: str = "",
+    keyword: str = ""
+):
+    """
+    获取题库中的题目（支持分页和筛选）
+    - page=0, page_size=0 表示返回全部（兼容旧版本）
+    - page>=1 开始分页
+    """
     bank = bank_service.get_bank(bank_id)
     if not bank:
         raise HTTPException(status_code=404, detail="题库不存在")
-    return [q.to_dict() for q in bank.questions]
+    
+    questions = bank.questions
+    
+    # 应用筛选条件
+    if type:
+        questions = [q for q in questions if q.type == type]
+    if chapter:
+        if chapter == '__uncategorized__':
+            questions = [q for q in questions if not q.chapter]
+        else:
+            questions = [q for q in questions if q.chapter == chapter]
+    if keyword:
+        keyword_lower = keyword.lower()
+        questions = [q for q in questions if keyword_lower in q.question.lower()]
+    
+    total = len(questions)
+    
+    # 不分页模式（兼容旧版本）
+    if page <= 0 or page_size <= 0:
+        return [q.to_dict() for q in questions]
+    
+    # 分页模式
+    start = (page - 1) * page_size
+    end = start + page_size
+    paged_questions = questions[start:end]
+    
+    return {
+        "items": [q.to_dict() for q in paged_questions],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": (total + page_size - 1) // page_size
+    }
 
 
 @app.post("/api/banks/{bank_id}/questions")
@@ -367,9 +419,24 @@ def update_question(bank_id: str, question_id: str, data: QuestionUpdate):
 @app.delete("/api/banks/{bank_id}/questions/{question_id}")
 def delete_question(bank_id: str, question_id: str):
     """删除题目"""
-    if bank_service.remove_question_from_bank(bank_id, question_id):
-        return {"message": "删除成功"}
-    raise HTTPException(status_code=404, detail="删除失败")
+    try:
+        bank = bank_service.get_bank(bank_id)
+        if not bank:
+            raise HTTPException(status_code=404, detail="题库不存在")
+        
+        question = bank.get_question(question_id)
+        if not question:
+            raise HTTPException(status_code=404, detail="题目不存在")
+        
+        if bank_service.delete_question_from_bank(bank_id, question_id):
+            return {"message": "删除成功"}
+        raise HTTPException(status_code=500, detail="删除操作失败")
+    except HTTPException:
+        raise
+    except Exception as e:
+        # 捕获所有异常并返回 JSON 格式的错误信息
+        print(f"Error deleting question: {e}")
+        raise HTTPException(status_code=500, detail=f"删除题目时发生错误: {str(e)}")
 
 
 # ============ 试卷 API ============
@@ -621,104 +688,6 @@ def check_ai_connection(
     return {"success": success, "message": message}
 
 
-@app.get("/api/system/select-folder")
-def select_folder():
-    """打开文件夹选择对话框"""
-    try:
-        import subprocess
-        
-        # 使用 PowerShell 脚本打开文件夹选择对话框，避免打包后 tkinter 失效的问题
-        # 使用 -sta 参数确保在单线程单元模式下运行，这是 Windows Forms 的要求
-        ps_script = """
-        Add-Type -AssemblyName System.Windows.Forms
-        [System.Windows.Forms.Application]::EnableVisualStyles()
-        $f = New-Object System.Windows.Forms.FolderBrowserDialog
-        $f.Description = "选择文件夹"
-        $f.ShowNewFolderButton = $true
-        $result = $f.ShowDialog()
-        if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
-            Write-Host "__RESULT__:$($f.SelectedPath)"
-        }
-        """
-        
-        # 使用 creationflags 而不是 startupinfo 来避免阻止 GUI 对话框
-        creationflags = 0
-        if os.name == 'nt':
-            # CREATE_NO_WINDOW 标志允许 GUI 对话框正常显示
-            creationflags = subprocess.CREATE_NO_WINDOW
-            
-        result = subprocess.run(
-            ["powershell", "-sta", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script], 
-            capture_output=True, 
-            text=True,
-            encoding='utf-8',
-            creationflags=creationflags,
-            timeout=120
-        )
-        
-        # 从输出中提取路径
-        path = ""
-        for line in result.stdout.splitlines():
-            if line.startswith("__RESULT__:"):
-                path = line.replace("__RESULT__:", "").strip()
-                break
-            
-        return {"path": path}
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=408, detail="文件夹选择超时")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"无法打开文件夹选择框: {str(e)}")
-
-
-@app.get("/api/system/select-file")
-def select_file(title: str = "选择文件", filetypes: str = "所有文件 (*.*)|*.*"):
-    """打开文件选择对话框"""
-    try:
-        import subprocess
-        
-        # 使用 PowerShell 脚本打开文件选择对话框
-        # filetypes 格式: "JSON文件 (*.json)|*.json|所有文件 (*.*)|*.*"
-        # 使用 -sta 参数确保在单线程单元模式下运行
-        ps_script = f"""
-        Add-Type -AssemblyName System.Windows.Forms
-        [System.Windows.Forms.Application]::EnableVisualStyles()
-        $f = New-Object System.Windows.Forms.OpenFileDialog
-        $f.Title = "{title}"
-        $f.Filter = "{filetypes}"
-        $result = $f.ShowDialog()
-        if ($result -eq [System.Windows.Forms.DialogResult]::OK) {{
-            Write-Host "__RESULT__:$($f.FileName)"
-        }}
-        """
-        
-        # 使用 creationflags 而不是 startupinfo 来避免阻止 GUI 对话框
-        creationflags = 0
-        if os.name == 'nt':
-            creationflags = subprocess.CREATE_NO_WINDOW
-            
-        result = subprocess.run(
-            ["powershell", "-sta", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script], 
-            capture_output=True, 
-            text=True,
-            encoding='utf-8',
-            creationflags=creationflags,
-            timeout=120
-        )
-        
-        # 从输出中提取路径
-        path = ""
-        for line in result.stdout.splitlines():
-            if line.startswith("__RESULT__:"):
-                path = line.replace("__RESULT__:", "").strip()
-                break
-            
-        return {"path": path}
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=408, detail="文件选择超时")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"无法打开文件选择框: {str(e)}")
-
-
 # ============ 收藏 API ============
 
 @app.get("/api/favorites")
@@ -778,6 +747,13 @@ def remove_favorite(question_id: str):
 def check_favorite(question_id: str):
     """检查是否已收藏"""
     return {"favorited": favorite_service.is_favorited(question_id)}
+
+
+@app.get("/api/favorites/ids")
+def get_favorited_ids():
+    """获取所有已收藏的题目ID列表（用于批量检查）"""
+    favorites = favorite_service.get_all_favorites()
+    return {"ids": [fav.question_id for fav in favorites]}
 
 
 @app.put("/api/favorites/{question_id}/note")
@@ -1152,7 +1128,7 @@ def import_data(data: ImportRequest):
                 app_config.ai_config.model = ai_config_data.get("model", "")
                 app_config.ai_config.vision_model = ai_config_data.get("vision_model", "")
                 app_config.ai_config.temperature = ai_config_data.get("temperature", 0.3)
-                app_config.ai_config.max_tokens = ai_config_data.get("max_tokens", 4096)
+                app_config.ai_config.max_tokens = ai_config_data.get("max_tokens", 100000)
                 app_config.save()
                 ai_service._reset_client()
                 imported.append("AI配置")
@@ -1170,11 +1146,11 @@ def import_data(data: ImportRequest):
 
 def parse_version(version_str: str) -> tuple:
     """解析版本号为元组，用于比较"""
-    # 移除 'v' 前缀（如 v1.0.0 -> 1.0.0）
+    # 移除 'v' 前缀（如 v2.0.0 -> 2.0.0）
     if version_str.startswith('v'):
         version_str = version_str[1:]
     
-    # 处理预发布版本（如 1.0.0-beta.1）
+    # 处理预发布版本（如 2.0.0-beta.1）
     version_str = version_str.split('-')[0]
     
     parts = version_str.split('.')
@@ -1194,6 +1170,24 @@ def get_current_version():
         "version": CURRENT_VERSION,
         "name": "智题坊"
     }
+
+
+@app.get("/api/system/select-folder")
+def select_folder():
+    """打开文件夹选择对话框"""
+    import tkinter as tk
+    from tkinter import filedialog
+    
+    root = tk.Tk()
+    root.withdraw()  # 隐藏主窗口
+    root.attributes('-topmost', True)  # 置顶
+    
+    folder_path = filedialog.askdirectory(title="选择文件夹")
+    root.destroy()
+    
+    if folder_path:
+        return {"path": folder_path}
+    return {"path": ""}
 
 
 @app.get("/api/system/check-update")

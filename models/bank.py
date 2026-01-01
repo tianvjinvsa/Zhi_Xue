@@ -104,11 +104,15 @@ class QuestionBank:
     
     def get_all_chapters(self) -> List[str]:
         """获取所有章节（包含预定义章节和题目中的章节）"""
-        chapters = set(self.chapters) if self.chapters else set()
+        # 使用列表保持顺序，先加入预定义的章节
+        all_chapters = list(self.chapters) if self.chapters else []
+        
+        # 遍历题目，发现不在列表中的章节则追加
         for q in self.questions:
-            if q.chapter:
-                chapters.add(q.chapter)
-        return sorted(list(chapters))
+            if q.chapter and q.chapter not in all_chapters:
+                all_chapters.append(q.chapter)
+        
+        return all_chapters
     
     def add_chapter(self, chapter: str) -> bool:
         """添加章节"""

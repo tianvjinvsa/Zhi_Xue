@@ -3,7 +3,7 @@ import { ElMessage } from "element-plus";
 
 const api = axios.create({
   baseURL: "/api",
-  timeout: 30000,
+  timeout: 3000000,
 });
 
 // 响应拦截器
@@ -107,6 +107,7 @@ export const favoriteApi = {
   getAll: () => api.get("/favorites"),
   getStatistics: () => api.get("/favorites/statistics"),
   getBanks: () => api.get("/favorites/banks"),
+  getIds: () => api.get("/favorites/ids"), // 批量获取已收藏的ID列表
   add: (bankId, questionId) => api.post(`/favorites/${bankId}/${questionId}`),
   remove: (questionId) => api.delete(`/favorites/${questionId}`),
   check: (questionId) => api.get(`/favorites/check/${questionId}`),

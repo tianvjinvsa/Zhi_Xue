@@ -75,7 +75,7 @@ import {
 } from '@element-plus/icons-vue'
 
 const marketUrl = 'http://pan.matehub.top/'
-const bilibiliUrl = 'https://space.bilibili.com/1519480794?spm_id_from=333.1007.0.0'
+const bilibiliUrl = 'https://www.bilibili.com/video/BV1V7vXBsEhu/?vd_source=9f6dba46a25347083d8d2aa39d801b33'
 const iframeRef = ref(null)
 const iframeWrapper = ref(null)
 const loading = ref(true)
