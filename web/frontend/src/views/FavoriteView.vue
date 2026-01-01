@@ -191,7 +191,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Star, StarFilled, Folder, Select, Finished, 
@@ -199,6 +200,7 @@ import {
 } from '@element-plus/icons-vue'
 import { favoriteApi, bankApi } from '@/api'
 
+const route = useRoute()
 const loading = ref(false)
 const favorites = ref([])
 const banks = ref([])
@@ -296,6 +298,13 @@ const clearAllFavorites = async () => {
     ElMessage.error('操作失败')
   }
 }
+
+// 监听路由进入，自动刷新数据
+watch(() => route.path, (newPath) => {
+  if (newPath === '/favorites') {
+    fetchFavorites()
+  }
+})
 
 onMounted(() => {
   fetchFavorites()

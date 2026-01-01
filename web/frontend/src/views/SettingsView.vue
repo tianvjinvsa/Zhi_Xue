@@ -89,7 +89,7 @@
             <div class="info-item">
               <span class="label">系统版本</span>
               <span class="value">
-                {{ currentVersion || '1.0.0' }}
+                {{ currentVersion || '2.0.0' }}
                 <el-button 
                   size="small" 
                   type="primary" 
@@ -170,11 +170,12 @@
     <el-dialog v-model="exportDialogVisible" title="导出数据" width="500px">
       <el-form label-width="100px">
         <el-form-item label="导出路径">
-          <el-input v-model="exportConfig.path" placeholder="请输入导出路径，如 D:\backup\智题坊数据">
-            <template #append>
-              <el-button @click="selectExportPath">浏览</el-button>
-            </template>
-          </el-input>
+          <div class="path-input-row">
+            <el-input v-model="exportConfig.path" placeholder="请输入导出文件夹的绝对路径，例如 D:\backup\智题坊数据" />
+            <el-button type="primary" @click="browseExportFolder" :loading="browsingFolder">
+              浏览
+            </el-button>
+          </div>
         </el-form-item>
         <el-form-item label="选择数据">
           <el-checkbox-group v-model="exportConfig.types">
@@ -196,11 +197,12 @@
     <el-dialog v-model="importDialogVisible" title="导入数据" width="520px">
       <el-form label-width="100px">
         <el-form-item label="导入路径">
-          <el-input v-model="importConfig.path" placeholder="请输入之前导出的数据文件夹路径">
-            <template #append>
-              <el-button @click="selectImportPath">浏览</el-button>
-            </template>
-          </el-input>
+          <div class="path-input-row">
+            <el-input v-model="importConfig.path" placeholder="请输入包含数据的文件夹绝对路径" />
+            <el-button type="primary" @click="browseImportFolder" :loading="browsingFolder">
+              浏览
+            </el-button>
+          </div>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" size="small" @click="scanImportFolder" :loading="scanning">
@@ -294,35 +296,19 @@
       
       <el-form :model="pathConfig" label-width="140px">
         <el-form-item label="题库数据目录">
-          <el-input v-model="pathConfig.banksDir" placeholder="题库数据存储目录">
-            <template #append>
-              <el-button @click="selectFolder('banksDir')">选择</el-button>
-            </template>
-          </el-input>
+          <el-input v-model="pathConfig.banksDir" placeholder="请输入题库数据存储的绝对路径" />
         </el-form-item>
         
         <el-form-item label="试卷数据目录">
-          <el-input v-model="pathConfig.papersDir" placeholder="试卷数据存储目录">
-            <template #append>
-              <el-button @click="selectFolder('papersDir')">选择</el-button>
-            </template>
-          </el-input>
+          <el-input v-model="pathConfig.papersDir" placeholder="请输入试卷数据存储的绝对路径" />
         </el-form-item>
         
         <el-form-item label="成绩数据目录">
-          <el-input v-model="pathConfig.resultsDir" placeholder="成绩数据存储目录">
-            <template #append>
-              <el-button @click="selectFolder('resultsDir')">选择</el-button>
-            </template>
-          </el-input>
+          <el-input v-model="pathConfig.resultsDir" placeholder="请输入成绩数据存储的绝对路径" />
         </el-form-item>
         
         <el-form-item label="收藏数据文件">
-          <el-input v-model="pathConfig.favoritesFile" placeholder="收藏数据文件路径">
-            <template #append>
-              <el-button @click="selectFolder('favoritesFile')">选择</el-button>
-            </template>
-          </el-input>
+          <el-input v-model="pathConfig.favoritesFile" placeholder="请输入收藏数据文件的绝对路径" />
         </el-form-item>
         
         <el-form-item>
@@ -365,6 +351,7 @@ const exportConfig = ref({
 const importDialogVisible = ref(false)
 const importing = ref(false)
 const scanning = ref(false)
+const browsingFolder = ref(false)
 const importScanResult = ref(null)
 const importConfig = ref({
   path: '',
@@ -377,7 +364,7 @@ const aiConfig = ref({
   model: 'gpt-4o-mini',
   visionModel: 'gpt-4o',
   temperature: 0.3,
-  maxTokens: 4096
+  maxTokens: 100000
 })
 
 const pathConfig = ref({
@@ -396,7 +383,7 @@ const loadConfig = async () => {
     aiConfig.value.model = config.model || 'gpt-4o-mini'
     aiConfig.value.visionModel = config.vision_model || 'gpt-4o'
     aiConfig.value.temperature = config.temperature ?? 0.3
-    aiConfig.value.maxTokens = config.max_tokens || 4096
+    aiConfig.value.maxTokens = config.max_tokens || 100000
   } catch (e) {
     console.error('加载配置失败:', e)
   }
@@ -469,17 +456,6 @@ const resetPaths = async () => {
   }
 }
 
-const selectFolder = async (field) => {
-  try {
-    const data = await systemApi.selectFolder();
-    if (data.path) {
-      pathConfig.value[field] = data.path;
-    }
-  } catch (error) {
-    ElMessage.error('无法打开文件夹选择框');
-  }
-}
-
 const testConnection = async () => {
   testing.value = true
   try {
@@ -511,10 +487,10 @@ const loadVersion = async () => {
     if (data && data.version) {
       currentVersion.value = data.version
     } else {
-      currentVersion.value = '1.0.0'
+      currentVersion.value = '2.0.0'
     }
   } catch {
-    currentVersion.value = '1.0.0'
+    currentVersion.value = '2.0.0'
   }
 }
 
@@ -552,14 +528,33 @@ const showExportDialog = () => {
   exportDialogVisible.value = true
 }
 
-const selectExportPath = async () => {
+// 浏览文件夹 - 导出
+const browseExportFolder = async () => {
+  browsingFolder.value = true
   try {
-    const data = await systemApi.selectFolder();
-    if (data.path) {
-      exportConfig.value.path = data.path;
+    const result = await systemApi.selectFolder()
+    if (result.path) {
+      exportConfig.value.path = result.path
     }
   } catch (error) {
-    ElMessage.error('无法打开文件夹选择框');
+    ElMessage.error('打开文件夹选择器失败')
+  } finally {
+    browsingFolder.value = false
+  }
+}
+
+// 浏览文件夹 - 导入
+const browseImportFolder = async () => {
+  browsingFolder.value = true
+  try {
+    const result = await systemApi.selectFolder()
+    if (result.path) {
+      importConfig.value.path = result.path
+    }
+  } catch (error) {
+    ElMessage.error('打开文件夹选择器失败')
+  } finally {
+    browsingFolder.value = false
   }
 }
 
@@ -597,19 +592,6 @@ const showImportDialog = () => {
   importConfig.value.types = []
   importScanResult.value = null
   importDialogVisible.value = true
-}
-
-const selectImportPath = async () => {
-  try {
-    const data = await systemApi.selectFolder();
-    if (data.path) {
-      importConfig.value.path = data.path;
-      // 自动扫描
-      scanImportFolder();
-    }
-  } catch (error) {
-    ElMessage.error('无法打开文件夹选择框');
-  }
 }
 
 const scanImportFolder = async () => {
@@ -845,6 +827,16 @@ onMounted(async () => {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+  }
+  
+  .path-input-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    
+    .el-input {
+      flex: 1;
+    }
   }
   
   .path-config-section {

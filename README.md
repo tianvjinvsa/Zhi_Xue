@@ -1,6 +1,7 @@
 # 智题坊
 
-一个功能完善的智能答题系统，采用 **Vue 3 + Element Plus + FastAPI** 技术栈构建，通过 **PyInstaller** 打包为桌面应用程序。支持题库管理、智能组卷、在线答题、自动评分和 AI 辅助功能。
+一个功能完善的智能答题系统，采用 **Vue 3 + Element Plus + FastAPI** 技术栈构建，通过 **PyInstaller**
+打包为桌面应用程序。支持题库管理、智能组卷、在线答题、自动评分和 AI 辅助功能。
 
 ## ✨ 功能特性
 
@@ -29,13 +30,13 @@
 
 ## 🛠️ 技术栈
 
-| 组件 | 技术 |
-|------|------|
-| **前端框架** | Vue 3 + Element Plus |
-| **构建工具** | Vite |
-| **后端框架** | FastAPI (Python) |
-| **数据存储** | 本地 JSON 文件 |
-| **桌面打包** | PyInstaller |
+| 组件        | 技术                   |
+|-----------|----------------------|
+| **前端框架**  | Vue 3 + Element Plus |
+| **构建工具**  | Vite                 |
+| **后端框架**  | FastAPI (Python)     |
+| **数据存储**  | 本地 JSON 文件           |
+| **桌面打包**  | PyInstaller          |
 | **AI 接口** | OpenAI / 火山引擎 兼容 API |
 
 ## 📁 项目结构
@@ -187,22 +188,20 @@ pyinstaller build.spec
 2. 如有新版本会显示更新说明
 3. 点击"前往下载"可跳转到下载页面
 
-发布地址：<https://github.com/K-zhaochao/AnswerSystem/releases>
-
 ## ⚙️ 配置说明
 
 ### AI 服务配置
 
 在"系统设置"页面配置 AI 服务：
 
-| 配置项 | 说明 |
-|--------|------|
-| API Base URL | API 端点地址 |
-| API Key | 您的 API 密钥（加密存储） |
-| 模型名称 | 使用的模型（如 gpt-4o-mini） |
-| 视觉模型 | 图片识别模型（如 gpt-4o） |
-| Temperature | 生成随机性（0-2） |
-| Max Tokens | 最大输出长度 |
+| 配置项          | 说明                   |
+|--------------|----------------------|
+| API Base URL | API 端点地址             |
+| API Key      | 您的 API 密钥（加密存储）      |
+| 模型名称         | 使用的模型（如 gpt-4o-mini） |
+| 视觉模型         | 图片识别模型（如 gpt-4o）     |
+| Temperature  | 生成随机性（0-2）           |
+| Max Tokens   | 最大输出长度               |
 
 ### 支持的 AI 提供商
 
@@ -218,9 +217,3 @@ pyinstaller build.spec
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
-
-## 📞 联系方式
-
-- **QQ**：[1727369245](https://qm.qq.com/q/HruBrdOukc)
-- **GitHub**：[K-zhaochao](https://github.com/K-zhaochao)
-- **赞助支持**：[爱发电](https://afdian.com/a/draven323)

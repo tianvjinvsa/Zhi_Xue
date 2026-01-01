@@ -363,7 +363,7 @@ B. 选项二
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   MagicStick, UploadFilled, Files, EditPen, Cpu, 
@@ -592,6 +592,7 @@ const saveEdit = () => {
 
 const showImportDialog = async () => {
   importDialogVisible.value = true
+  targetBankId.value = ''
   targetChapter.value = ''
   targetBankChapters.value = []
   try {
@@ -628,6 +629,8 @@ const confirmImport = async () => {
     ElMessage.success('导入成功')
     parsedQuestions.value = parsedQuestions.value.filter(q => !q.selected)
     importDialogVisible.value = false
+    targetBankId.value = ''
+    targetChapter.value = ''
     updateSelectState()
   } catch (error) {
     ElMessage.error('导入失败')

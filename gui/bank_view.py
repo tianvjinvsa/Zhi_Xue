@@ -17,12 +17,20 @@ from models import Question, QuestionBank, QuestionType
 class BankView(QWidget):
     """题库管理视图"""
     
+    # 分页配置
+    PAGE_SIZE = 100
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.bank_service = BankService()
         self.import_service = ImportService()
         self.current_bank_id = None
         self._pending_questions = []  # 待导入的题目
+        
+        # 分页状态
+        self._current_page = 1
+        self._total_pages = 1
+        self._all_questions = []  # 当前题库的所有题目
         
         self._setup_ui()
     
@@ -252,7 +260,163 @@ class BankView(QWidget):
         
         layout.addWidget(self.question_table)
         
+        # 分页控件
+        pagination_layout = QHBoxLayout()
+        pagination_layout.setSpacing(8)
+        
+        self.prev_btn = QPushButton("◀ 上一页")
+        self.prev_btn.setFixedHeight(32)
+        self.prev_btn.clicked.connect(self._prev_page)
+        self.prev_btn.setEnabled(False)
+        self.prev_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 6px;
+                padding: 0 16px;
+                font-size: 12px;
+                color: #475569;
+            }
+            QPushButton:hover:enabled {
+                background-color: #f1f5f9;
+            }
+            QPushButton:disabled {
+                color: #94a3b8;
+            }
+        """)
+        pagination_layout.addWidget(self.prev_btn)
+        
+        pagination_layout.addStretch()
+        
+        self.page_label = QLabel("第 1 / 1 页")
+        self.page_label.setStyleSheet("font-size: 13px; color: #64748b;")
+        pagination_layout.addWidget(self.page_label)
+        
+        pagination_layout.addStretch()
+        
+        self.next_btn = QPushButton("下一页 ▶")
+        self.next_btn.setFixedHeight(32)
+        self.next_btn.clicked.connect(self._next_page)
+        self.next_btn.setEnabled(False)
+        self.next_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 6px;
+                padding: 0 16px;
+                font-size: 12px;
+                color: #475569;
+            }
+            QPushButton:hover:enabled {
+                background-color: #f1f5f9;
+            }
+            QPushButton:disabled {
+                color: #94a3b8;
+            }
+        """)
+        pagination_layout.addWidget(self.next_btn)
+        
+        layout.addLayout(pagination_layout)
+        
         return widget
+    
+    def _prev_page(self):
+        """上一页"""
+        if self._current_page > 1:
+            self._current_page -= 1
+            self._display_current_page()
+    
+    def _next_page(self):
+        """下一页"""
+        if self._current_page < self._total_pages:
+            self._current_page += 1
+            self._display_current_page()
+    
+    def _update_pagination_ui(self):
+        """更新分页UI状态"""
+        self.prev_btn.setEnabled(self._current_page > 1)
+        self.next_btn.setEnabled(self._current_page < self._total_pages)
+        self.page_label.setText(f"第 {self._current_page} / {self._total_pages} 页  (共 {len(self._all_questions)} 题)")
+    
+    def _display_current_page(self):
+        """显示当前页的题目"""
+        self.question_table.setRowCount(0)
+        
+        start_idx = (self._current_page - 1) * self.PAGE_SIZE
+        end_idx = start_idx + self.PAGE_SIZE
+        page_questions = self._all_questions[start_idx:end_idx]
+        
+        for question in page_questions:
+            row = self.question_table.rowCount()
+            self.question_table.insertRow(row)
+            
+            # 类型
+            type_item = QTableWidgetItem(QuestionType.get_display_name(question.type))
+            type_item.setData(Qt.UserRole, question.id)
+            self.question_table.setItem(row, 0, type_item)
+            
+            # 题目内容（截断显示）
+            content = question.question[:50] + "..." if len(question.question) > 50 else question.question
+            self.question_table.setItem(row, 1, QTableWidgetItem(content))
+            
+            # 答案
+            answer_text = self._format_answer(question.answer)
+            self.question_table.setItem(row, 2, QTableWidgetItem(answer_text))
+            
+            # 难度
+            diff_text = "★" * question.difficulty
+            diff_item = QTableWidgetItem(diff_text)
+            diff_item.setTextAlignment(Qt.AlignCenter)
+            self.question_table.setItem(row, 3, diff_item)
+            
+            # 来源
+            source_map = {"manual": "手动", "ai_generated": "AI生成", "imported": "导入"}
+            source_text = source_map.get(question.source, question.source)
+            self.question_table.setItem(row, 4, QTableWidgetItem(source_text))
+            
+            # 操作
+            btn_widget = QWidget()
+            btn_layout = QHBoxLayout(btn_widget)
+            btn_layout.setContentsMargins(4, 4, 4, 4)
+            btn_layout.setSpacing(4)
+            
+            edit_btn = QPushButton("编辑")
+            edit_btn.setFixedSize(45, 26)
+            edit_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #f5f3ff;
+                    color: #667eea;
+                    border: 1px solid #667eea;
+                    border-radius: 4px;
+                    font-size: 11px;
+                }
+                QPushButton:hover {
+                    background-color: #ede9fe;
+                }
+            """)
+            edit_btn.clicked.connect(lambda checked, q=question: self._edit_question(q))
+            btn_layout.addWidget(edit_btn)
+            
+            del_btn = QPushButton("删除")
+            del_btn.setFixedSize(45, 26)
+            del_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #fef2f2;
+                    color: #ef4444;
+                    border: 1px solid #fecaca;
+                    border-radius: 4px;
+                    font-size: 11px;
+                }
+                QPushButton:hover {
+                    background-color: #fee2e2;
+                }
+            """)
+            del_btn.clicked.connect(lambda checked, q=question: self._delete_question(q))
+            btn_layout.addWidget(del_btn)
+            
+            self.question_table.setCellWidget(row, 5, btn_widget)
+        
+        self._update_pagination_ui()
     
     def refresh(self):
         """刷新数据"""
@@ -324,84 +488,27 @@ class BankView(QWidget):
             self.bank_table.setCellWidget(row, 2, btn_widget)
     
     def _load_questions(self, bank_id: str):
-        """加载题目列表"""
+        """加载题目列表（使用分页）"""
         self.question_table.setRowCount(0)
         
         bank = self.bank_service.get_bank(bank_id)
         if not bank:
+            self._all_questions = []
+            self._current_page = 1
+            self._total_pages = 1
+            self._update_pagination_ui()
             return
         
-        self.question_header_label.setText(f"题目列表 - {bank.name} ({len(bank.questions)}题)")
+        # 保存所有题目并计算分页
+        self._all_questions = bank.questions
+        total = len(self._all_questions)
+        self._total_pages = max(1, (total + self.PAGE_SIZE - 1) // self.PAGE_SIZE)
+        self._current_page = 1
         
-        for question in bank.questions:
-            row = self.question_table.rowCount()
-            self.question_table.insertRow(row)
-            
-            # 类型
-            type_item = QTableWidgetItem(QuestionType.get_display_name(question.type))
-            type_item.setData(Qt.UserRole, question.id)
-            self.question_table.setItem(row, 0, type_item)
-            
-            # 题目内容（截断显示）
-            content = question.question[:50] + "..." if len(question.question) > 50 else question.question
-            self.question_table.setItem(row, 1, QTableWidgetItem(content))
-            
-            # 答案
-            answer_text = self._format_answer(question.answer)
-            self.question_table.setItem(row, 2, QTableWidgetItem(answer_text))
-            
-            # 难度
-            diff_text = "★" * question.difficulty
-            diff_item = QTableWidgetItem(diff_text)
-            diff_item.setTextAlignment(Qt.AlignCenter)
-            self.question_table.setItem(row, 3, diff_item)
-            
-            # 来源
-            source_map = {"manual": "手动", "ai_generated": "AI生成", "imported": "导入"}
-            source_text = source_map.get(question.source, question.source)
-            self.question_table.setItem(row, 4, QTableWidgetItem(source_text))
-            
-            # 操作
-            btn_widget = QWidget()
-            btn_layout = QHBoxLayout(btn_widget)
-            btn_layout.setContentsMargins(4, 4, 4, 4)
-            btn_layout.setSpacing(4)
-            
-            edit_btn = QPushButton("编辑")
-            edit_btn.setFixedSize(45, 26)
-            edit_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #f5f3ff;
-                    color: #667eea;
-                    border: 1px solid #667eea;
-                    border-radius: 4px;
-                    font-size: 11px;
-                }
-                QPushButton:hover {
-                    background-color: #ede9fe;
-                }
-            """)
-            edit_btn.clicked.connect(lambda checked, q=question: self._edit_question(q))
-            btn_layout.addWidget(edit_btn)
-            
-            del_btn = QPushButton("删除")
-            del_btn.setFixedSize(45, 26)
-            del_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: #fef2f2;
-                    color: #ef4444;
-                    border: 1px solid #fecaca;
-                    border-radius: 4px;
-                    font-size: 11px;
-                }
-                QPushButton:hover {
-                    background-color: #fee2e2;
-                }
-            """)
-            del_btn.clicked.connect(lambda checked, qid=question.id: self._delete_question(qid))
-            btn_layout.addWidget(del_btn)
-            
-            self.question_table.setCellWidget(row, 5, btn_widget)
+        self.question_header_label.setText(f"题目列表 - {bank.name} ({total}题)")
+        
+        # 显示第一页
+        self._display_current_page()
     
     def _format_answer(self, answer) -> str:
         """格式化答案显示"""

@@ -76,6 +76,11 @@ class FavoriteView(QWidget):
         
         content_splitter.setSizes([280, 900])
         layout.addWidget(content_splitter, 1)
+
+    def showEvent(self, event):
+        """界面显示时自动刷新"""
+        super().showEvent(event)
+        self.refresh()
     
     def _create_stats_cards(self) -> QWidget:
         """创建统计卡片"""
@@ -273,6 +278,7 @@ class FavoriteView(QWidget):
     
     def refresh(self):
         """刷新数据"""
+        self.favorite_service.reload()
         self._load_banks()
         self._load_questions()
         self._update_stats()

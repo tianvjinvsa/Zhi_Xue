@@ -56,6 +56,9 @@ a = Analysis(
         ('config.py', '.'),
     ],
     hiddenimports=[
+        # 高性能 JSON
+        'orjson',
+
         # FastAPI 相关
         'fastapi',
         'fastapi.staticfiles',
@@ -144,8 +147,8 @@ a = Analysis(
     runtime_hooks=[],
     excludes=[
         # 图形界面库 (使用 Web 界面，不需要这些)
-        'tkinter',
-        '_tkinter',
+        # 'tkinter',  # 后端文件夹选择功能需要 tkinter
+        # '_tkinter',
         'PySide6',
         'PyQt5',
         'PyQt6',
@@ -188,7 +191,7 @@ a = Analysis(
 # 移除不必要的本地化文件
 a.datas = [x for x in a.datas if not any([
     'locale' in x[0] and not any(loc in x[0] for loc in ['zh', 'en']),  # 只保留中英文
-    'tcl' in x[0].lower() and 'tk' in x[0].lower(),  # 移除 Tk/Tcl
+    # 'tcl' in x[0].lower() and 'tk' in x[0].lower(),  # 保留 Tk/Tcl 资源
     '.pyc' in x[0],  # 移除编译缓存
     '__pycache__' in x[0],  # 移除缓存目录
     '.pyo' in x[0],

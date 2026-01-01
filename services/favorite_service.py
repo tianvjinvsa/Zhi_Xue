@@ -42,6 +42,10 @@ class FavoriteService:
                 self._collection = FavoriteCollection()
         else:
             self._collection = FavoriteCollection()
+            
+    def reload(self):
+        """重新加载数据"""
+        self._load_favorites()
     
     def _save_favorites(self):
         """保存收藏数据"""

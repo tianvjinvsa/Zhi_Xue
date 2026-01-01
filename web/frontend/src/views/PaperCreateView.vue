@@ -46,23 +46,33 @@
             </el-divider>
             
             <el-form-item label="来源题库" prop="bank_ids">
-              <el-checkbox-group v-model="form.bank_ids">
-                <el-checkbox 
-                  v-for="bank in banks" 
-                  :key="bank.id" 
+              <el-select
+                v-model="form.bank_ids"
+                placeholder="请选择题库"
+                filterable
+                style="width: 100%"
+                @change="handleBankChange"
+              >
+                <el-option
+                  v-for="bank in banks"
+                  :key="bank.id"
+                  :label="bank.name"
                   :value="bank.id"
                   :disabled="bank.question_count === 0"
                 >
-                  {{ bank.name }}
-                  <el-tag size="small" type="info">{{ bank.question_count || 0 }} 题</el-tag>
-                </el-checkbox>
-              </el-checkbox-group>
+                  <span style="float: left">{{ bank.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px">
+                    {{ bank.question_count || 0 }} 题
+                  </span>
+                </el-option>
+              </el-select>
             </el-form-item>
 
-            <el-form-item label="章节筛选" v-if="form.bank_ids.length > 0">
+            <el-form-item label="章节筛选" v-if="form.bank_ids">
               <el-select
                 v-model="form.chapters"
                 multiple
+                filterable
                 collapse-tags
                 collapse-tags-tooltip
                 placeholder="不选则包含所有章节"
@@ -249,7 +259,7 @@ const form = ref({
   title: '',
   description: '',
   time_limit: 60,
-  bank_ids: [],
+  bank_ids: '', // Changed to string for single selection
   chapters: [],
   single_count: 10,
   multiple_count: 5,
@@ -260,12 +270,13 @@ const form = ref({
     multiple: 5,
     judge: 2,
     fill: 5
-  }
+  },
+  shuffle_questions: true
 })
 
 const rules = {
   title: [{ required: true, message: '请输入试卷名称', trigger: 'blur' }],
-  bank_ids: [{ required: true, message: '请至少选择一个题库', trigger: 'change' }]
+  bank_ids: [{ required: true, message: '请选择来源题库', trigger: 'change' }]
 }
 
 const totalQuestions = computed(() => {
@@ -299,6 +310,7 @@ const generatePaper = async () => {
     try {
       const config = {
         ...form.value,
+        bank_ids: [form.value.bank_ids], // Convert single ID to array for backend compatibility
         min_difficulty: difficultyRange.value[0],
         max_difficulty: difficultyRange.value[1]
       }
@@ -319,46 +331,32 @@ const bankDetails = ref({})
 const loadingChapters = ref(false)
 
 const allChapters = computed(() => {
-  const chapters = new Set()
-  form.value.bank_ids.forEach(id => {
-    const bank = bankDetails.value[id]
-    if (bank && bank.chapters) {
-      bank.chapters.forEach(c => {
-        if (c) chapters.add(c)
-      })
-    }
-  })
-  return Array.from(chapters).sort()
+  const bankId = form.value.bank_ids
+  if (!bankId) return []
+  
+  const bank = bankDetails.value[bankId]
+  if (bank && bank.chapters) {
+    return bank.chapters.sort()
+  }
+  return []
 })
 
-watch(() => form.value.bank_ids, async (newIds) => {
-  if (newIds.length === 0) {
-    form.value.chapters = []
-    return
-  }
+const handleBankChange = async (bankId) => {
+  form.value.chapters = [] // Clear selected chapters when bank changes
+  if (!bankId) return
 
   loadingChapters.value = true
   try {
-    for (const id of newIds) {
-      if (!bankDetails.value[id]) {
-        const bank = await bankApi.get(id)
-        bankDetails.value[id] = bank
-      }
+    if (!bankDetails.value[bankId]) {
+      const bank = await bankApi.get(bankId)
+      bankDetails.value[bankId] = bank
     }
-    
-    // 过滤掉不再有效的章节选择
-    // 使用 setTimeout 确保 allChapters 已更新
-    setTimeout(() => {
-      const available = new Set(allChapters.value)
-      form.value.chapters = form.value.chapters.filter(c => available.has(c))
-    }, 0)
-    
   } catch (error) {
     console.error('获取题库详情失败:', error)
   } finally {
     loadingChapters.value = false
   }
-}, { deep: true })
+}
 
 onMounted(() => {
   fetchBanks()

@@ -20,6 +20,18 @@ else:
     APP_ROOT = Path(__file__).parent.parent
     IS_FROZEN = False
 
+# 解决打包后无控制台导致的 stdout 为 None 的问题
+if IS_FROZEN:
+    class NullWriter:
+        def write(self, text): pass
+        def flush(self): pass
+        def isatty(self): return False
+    
+    if sys.stdout is None:
+        sys.stdout = NullWriter()
+    if sys.stderr is None:
+        sys.stderr = NullWriter()
+
 # 路径定义
 WEB_ROOT = APP_ROOT / "web"
 BACKEND_DIR = WEB_ROOT / "backend"
@@ -112,7 +124,8 @@ def start_production_server():
     threading.Thread(target=open_browser, daemon=True).start()
     
     # 启动服务
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="warning")
+    # 在打包环境下禁用颜色输出，避免 isatty 错误
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="warning", use_colors=not IS_FROZEN)
 
 
 def start_dev_server():
