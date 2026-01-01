@@ -255,9 +255,39 @@ const formatTime = (seconds) => {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
+// 本地存储答案（用于页面切换后恢复）
+const EXAM_STORAGE_KEY = `exam_progress_${paperId}`
+
+const saveLocalProgress = () => {
+  const progress = {
+    examId: examId.value,
+    answers: answers.value,
+    startTime: Date.now(),
+    remainingTime: remainingTime.value
+  }
+  sessionStorage.setItem(EXAM_STORAGE_KEY, JSON.stringify(progress))
+}
+
+const loadLocalProgress = () => {
+  try {
+    const saved = sessionStorage.getItem(EXAM_STORAGE_KEY)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch (e) {
+    console.error('加载本地进度失败:', e)
+  }
+  return null
+}
+
+const clearLocalProgress = () => {
+  sessionStorage.removeItem(EXAM_STORAGE_KEY)
+}
+
 const selectAnswer = (questionId, value) => {
   answers.value[questionId] = value
   saveAnswer(questionId)
+  saveLocalProgress()
 }
 
 const toggleMultipleAnswer = (questionId, letter) => {
@@ -272,10 +302,12 @@ const toggleMultipleAnswer = (questionId, letter) => {
     answers.value[questionId].sort()
   }
   saveAnswer(questionId)
+  saveLocalProgress()
 }
 
 const updateAnswer = (questionId) => {
   saveAnswer(questionId)
+  saveLocalProgress()
 }
 
 const saveAnswer = async (questionId) => {
@@ -330,6 +362,7 @@ const submitExam = async () => {
   loading.value = true
   try {
     const result = await examApi.finish(examId.value)
+    clearLocalProgress() // 交卷后清除本地进度
     ElMessage.success('交卷成功！')
     router.push(`/results/${result.id}`)
   } catch (error) {
@@ -341,12 +374,20 @@ const submitExam = async () => {
 const startTimer = () => {
   if (!paper.value?.time_limit) return
   
-  remainingTime.value = paper.value.time_limit * 60
+  // 尝试从本地恢复剩余时间
+  const localProgress = loadLocalProgress()
+  if (localProgress && localProgress.remainingTime > 0) {
+    remainingTime.value = localProgress.remainingTime
+  } else {
+    remainingTime.value = paper.value.time_limit * 60
+  }
   
   timerInterval = setInterval(() => {
     remainingTime.value--
+    saveLocalProgress() // 定期保存时间
     if (remainingTime.value <= 0) {
       clearInterval(timerInterval)
+      clearLocalProgress()
       ElMessage.warning('时间到，自动交卷！')
       submitExam()
     }
@@ -359,16 +400,43 @@ const initExam = async () => {
     paper.value = await paperApi.get(paperId)
     questions.value = await paperApi.getQuestions(paperId)
     
-    const result = await examApi.start(paperId)
-    examId.value = result.exam_id
+    // 尝试恢复本地进度
+    const localProgress = loadLocalProgress()
     
-    questions.value.forEach(q => {
-      if (q.type === 'multiple') {
-        answers.value[q.id] = []
-      } else {
-        answers.value[q.id] = null
+    if (localProgress && localProgress.examId) {
+      // 恢复已有的考试
+      examId.value = localProgress.examId
+      
+      // 先初始化默认答案
+      questions.value.forEach(q => {
+        if (q.type === 'multiple') {
+          answers.value[q.id] = []
+        } else {
+          answers.value[q.id] = null
+        }
+      })
+      
+      // 然后恢复已保存的答案
+      if (localProgress.answers) {
+        Object.assign(answers.value, localProgress.answers)
       }
-    })
+      
+      ElMessage.success('已恢复答题进度')
+    } else {
+      // 开始新考试
+      const result = await examApi.start(paperId)
+      examId.value = result.exam_id
+      
+      questions.value.forEach(q => {
+        if (q.type === 'multiple') {
+          answers.value[q.id] = []
+        } else {
+          answers.value[q.id] = null
+        }
+      })
+      
+      saveLocalProgress()
+    }
     
     await checkFavoriteStatus()
     startTimer()

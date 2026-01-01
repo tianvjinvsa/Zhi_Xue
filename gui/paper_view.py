@@ -25,6 +25,7 @@ class PaperView(QWidget):
         super().__init__(parent)
         self.paper_service = PaperService()
         self.bank_service = BankService()
+        self.filter_bank_id = None  # 用于筛选的题库ID
         
         self._setup_ui()
     
@@ -77,6 +78,46 @@ class PaperView(QWidget):
         create_btn.clicked.connect(self._show_create_dialog)
         btn_layout.addWidget(create_btn)
         
+        # 题库筛选
+        filter_label = QLabel("📚 筛选:")
+        filter_label.setStyleSheet("color: #475569; font-size: 14px;")
+        btn_layout.addWidget(filter_label)
+        
+        self.bank_filter_combo = QComboBox()
+        self.bank_filter_combo.setMinimumWidth(180)
+        self.bank_filter_combo.setStyleSheet("""
+            QComboBox {
+                padding: 8px 12px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                background-color: white;
+            }
+            QComboBox:hover {
+                border-color: #667eea;
+            }
+        """)
+        self.bank_filter_combo.currentIndexChanged.connect(self._on_bank_filter_changed)
+        btn_layout.addWidget(self.bank_filter_combo)
+        
+        # 批量删除按钮
+        batch_delete_btn = QPushButton("🗑️ 批量删除")
+        batch_delete_btn.setFixedHeight(42)
+        batch_delete_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #fef2f2;
+                color: #ef4444;
+                border: 1px solid #fecaca;
+                border-radius: 8px;
+                padding: 0 16px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #fee2e2;
+            }
+        """)
+        batch_delete_btn.clicked.connect(self._batch_delete_papers)
+        btn_layout.addWidget(batch_delete_btn)
+        
         btn_layout.addStretch()
         layout.addLayout(btn_layout)
         
@@ -103,6 +144,7 @@ class PaperView(QWidget):
         self.paper_table.setColumnWidth(4, 160)
         self.paper_table.setColumnWidth(5, 240)
         self.paper_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.paper_table.setSelectionMode(QTableWidget.ExtendedSelection)  # 支持多选
         self.paper_table.verticalHeader().setVisible(False)
         self.paper_table.setShowGrid(False)
         self.paper_table.setAlternatingRowColors(True)
@@ -149,6 +191,26 @@ class PaperView(QWidget):
     
     def refresh(self):
         """刷新数据"""
+        # 更新题库筛选下拉框
+        current_filter = self.bank_filter_combo.currentData()
+        self.bank_filter_combo.blockSignals(True)
+        self.bank_filter_combo.clear()
+        self.bank_filter_combo.addItem("全部试卷", None)
+        banks = self.bank_service.get_banks_summary()
+        for bank in banks:
+            self.bank_filter_combo.addItem(f"{bank['name']}", bank['id'])
+        # 恢复之前的选择
+        if current_filter:
+            idx = self.bank_filter_combo.findData(current_filter)
+            if idx >= 0:
+                self.bank_filter_combo.setCurrentIndex(idx)
+        self.bank_filter_combo.blockSignals(False)
+        
+        self._load_papers()
+    
+    def _on_bank_filter_changed(self, index: int):
+        """题库筛选变化"""
+        self.filter_bank_id = self.bank_filter_combo.currentData()
         self._load_papers()
     
     def _load_papers(self):
@@ -157,6 +219,10 @@ class PaperView(QWidget):
         
         papers = self.paper_service.get_all_papers()
         for paper in papers:
+            # 如果设置了筛选，检查试卷是否包含该题库
+            if self.filter_bank_id and self.filter_bank_id not in paper.source_banks:
+                continue
+                
             row = self.paper_table.rowCount()
             self.paper_table.insertRow(row)
             
@@ -301,6 +367,38 @@ class PaperView(QWidget):
         if reply == QMessageBox.Yes:
             self.paper_service.delete_paper(paper_id)
             self.refresh()
+    
+    def _batch_delete_papers(self):
+        """批量删除选中的试卷"""
+        selected_rows = self.paper_table.selectionModel().selectedRows()
+        if not selected_rows:
+            QMessageBox.warning(self, "提示", "请先选择要删除的试卷")
+            return
+        
+        # 收集选中的试卷ID
+        paper_ids = []
+        for index in selected_rows:
+            item = self.paper_table.item(index.row(), 0)
+            if item:
+                paper_ids.append(item.data(Qt.UserRole))
+        
+        if not paper_ids:
+            return
+        
+        reply = QMessageBox.question(
+            self, "确认批量删除", 
+            f"确定要删除选中的 {len(paper_ids)} 份试卷吗？\n\n此操作不可恢复！",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            success_count = 0
+            for pid in paper_ids:
+                if self.paper_service.delete_paper(pid):
+                    success_count += 1
+            
+            self.refresh()
+            QMessageBox.information(self, "完成", f"成功删除 {success_count} 份试卷")
 
 
 class PaperGenerateDialog(QDialog):
@@ -443,6 +541,17 @@ class PaperGenerateDialog(QDialog):
         
         layout.addWidget(score_group)
         
+        # 其他设置
+        other_group = QGroupBox("⚙️ 其他设置")
+        other_layout = QVBoxLayout(other_group)
+        
+        self.shuffle_check = QCheckBox("🔀 打乱题目顺序")
+        self.shuffle_check.setToolTip("每次开始考试时随机打乱题目顺序和选项顺序")
+        self.shuffle_check.setStyleSheet("font-size: 14px; padding: 8px;")
+        other_layout.addWidget(self.shuffle_check)
+        
+        layout.addWidget(other_group)
+        
         # 按钮
         btn_layout = QHBoxLayout()
         btn_layout.addStretch()
@@ -524,6 +633,7 @@ class PaperGenerateDialog(QDialog):
             single_count=self.single_spin.value(),
             multiple_count=self.multiple_spin.value(),
             judge_count=self.judge_spin.value(),
+            shuffle_questions=self.shuffle_check.isChecked(),
             score_rules={
                 "single": float(self.single_score_spin.value()),
                 "multiple": float(self.multiple_score_spin.value()),

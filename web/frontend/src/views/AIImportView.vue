@@ -250,10 +250,15 @@ B. 选项二
     </div>
 
     <!-- 导入对话框 -->
-    <el-dialog v-model="importDialogVisible" title="导入到题库" width="450px" destroy-on-close>
+    <el-dialog v-model="importDialogVisible" title="导入到题库" width="500px" destroy-on-close>
       <el-form label-position="top">
         <el-form-item label="选择目标题库" required>
-          <el-select v-model="targetBankId" placeholder="请选择题库" style="width: 100%">
+          <el-select 
+            v-model="targetBankId" 
+            placeholder="请选择题库" 
+            style="width: 100%"
+            @change="loadTargetBankChapters"
+          >
             <el-option 
               v-for="bank in banks" 
               :key="bank.id" 
@@ -261,6 +266,25 @@ B. 选项二
               :value="bank.id" 
             />
           </el-select>
+        </el-form-item>
+        <el-form-item label="选择章节（可选）">
+          <el-select 
+            v-model="targetChapter" 
+            placeholder="可选择已有章节或留空" 
+            style="width: 100%"
+            clearable
+            filterable
+            allow-create
+            :disabled="!targetBankId"
+          >
+            <el-option 
+              v-for="chapter in targetBankChapters" 
+              :key="chapter" 
+              :label="chapter" 
+              :value="chapter" 
+            />
+          </el-select>
+          <div class="form-tip">可从已有章节中选择，或输入新章节名称</div>
         </el-form-item>
         <div class="import-summary">
           将导入 <strong>{{ selectedCount }}</strong> 道题目到所选题库。
@@ -339,7 +363,7 @@ B. 选项二
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   MagicStick, UploadFilled, Files, EditPen, Cpu, 
@@ -358,6 +382,7 @@ const parsedQuestions = ref([])
 const banks = ref([])
 const importDialogVisible = ref(false)
 const targetBankId = ref('')
+const targetChapter = ref('')
 const importing = ref(false)
 
 // 编辑相关
@@ -365,12 +390,52 @@ const editDialogVisible = ref(false)
 const editingQuestion = ref(null)
 const editingIndex = ref(-1)
 
+// 目标题库的章节列表
+const targetBankChapters = ref([])
+
 const generateForm = reactive({
   topic: '',
   count: 5,
   difficulty: 3,
   types: ['single']
 })
+
+// 会话存储的key
+const STORAGE_KEY = 'ai_import_parsed_questions'
+
+// 从sessionStorage恢复数据
+const restoreFromStorage = () => {
+  try {
+    const saved = sessionStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      const data = JSON.parse(saved)
+      if (Array.isArray(data) && data.length > 0) {
+        parsedQuestions.value = data
+        ElMessage.success(`已恢复 ${data.length} 道未导入的题目`)
+      }
+    }
+  } catch (error) {
+    console.error('恢复数据失败:', error)
+  }
+}
+
+// 保存到sessionStorage
+const saveToStorage = () => {
+  try {
+    if (parsedQuestions.value.length > 0) {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(parsedQuestions.value))
+    } else {
+      sessionStorage.removeItem(STORAGE_KEY)
+    }
+  } catch (error) {
+    console.error('保存数据失败:', error)
+  }
+}
+
+// 监听解析结果变化并保存
+watch(parsedQuestions, () => {
+  saveToStorage()
+}, { deep: true })
 
 // 选择逻辑
 const isAllSelected = ref(false)
@@ -527,6 +592,8 @@ const saveEdit = () => {
 
 const showImportDialog = async () => {
   importDialogVisible.value = true
+  targetChapter.value = ''
+  targetBankChapters.value = []
   try {
     banks.value = await bankApi.getAll()
   } catch (error) {
@@ -534,10 +601,29 @@ const showImportDialog = async () => {
   }
 }
 
+// 监听目标题库变化，加载章节
+const loadTargetBankChapters = async () => {
+  if (!targetBankId.value) {
+    targetBankChapters.value = []
+    return
+  }
+  try {
+    const result = await bankApi.getChapters(targetBankId.value)
+    targetBankChapters.value = result.chapters || []
+  } catch (error) {
+    targetBankChapters.value = []
+  }
+}
+
 const confirmImport = async () => {
   importing.value = true
   try {
-    const selectedQuestions = parsedQuestions.value.filter(q => q.selected)
+    const selectedQuestions = parsedQuestions.value
+      .filter(q => q.selected)
+      .map(q => ({
+        ...q,
+        chapter: targetChapter.value || q.chapter || ''
+      }))
     await bankApi.batchAddQuestions(targetBankId.value, selectedQuestions)
     ElMessage.success('导入成功')
     parsedQuestions.value = parsedQuestions.value.filter(q => !q.selected)
@@ -551,6 +637,8 @@ const confirmImport = async () => {
 }
 
 onMounted(async () => {
+  // 恢复之前未导入的题目
+  restoreFromStorage()
   try {
     banks.value = await bankApi.getAll()
   } catch (error) {}

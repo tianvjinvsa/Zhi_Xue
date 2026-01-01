@@ -183,6 +183,24 @@ class BankView(QWidget):
         import_question_btn.clicked.connect(self._import_questions)
         header.addWidget(import_question_btn)
         
+        batch_delete_btn = QPushButton("🗑️ 批量删除")
+        batch_delete_btn.setFixedHeight(36)
+        batch_delete_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #fef2f2;
+                color: #ef4444;
+                border: 1px solid #fecaca;
+                border-radius: 6px;
+                padding: 0 16px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #fee2e2;
+            }
+        """)
+        batch_delete_btn.clicked.connect(self._batch_delete_questions)
+        header.addWidget(batch_delete_btn)
+        
         layout.addLayout(header)
         
         # 题目表格
@@ -196,6 +214,7 @@ class BankView(QWidget):
         self.question_table.setColumnWidth(4, 80)
         self.question_table.setColumnWidth(5, 120)
         self.question_table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.question_table.setSelectionMode(QTableWidget.ExtendedSelection)  # 支持多选
         self.question_table.verticalHeader().setVisible(False)
         self.question_table.setShowGrid(False)
         self.question_table.setAlternatingRowColors(True)
@@ -475,14 +494,58 @@ class BankView(QWidget):
     
     def _delete_question(self, question_id: str):
         """删除题目"""
+        if not self.current_bank_id:
+            QMessageBox.warning(self, "提示", "请先选择一个题库")
+            return
+            
         reply = QMessageBox.question(
             self, "确认删除", "确定要删除这道题目吗？",
             QMessageBox.Yes | QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            self.bank_service.delete_question_from_bank(self.current_bank_id, question_id)
+            success = self.bank_service.delete_question_from_bank(self.current_bank_id, question_id)
+            if success:
+                self._load_questions(self.current_bank_id)
+                self._load_banks()
+            else:
+                QMessageBox.warning(self, "失败", "删除题目失败")
+    
+    def _batch_delete_questions(self):
+        """批量删除选中的题目"""
+        if not self.current_bank_id:
+            QMessageBox.warning(self, "提示", "请先选择一个题库")
+            return
+        
+        selected_rows = self.question_table.selectionModel().selectedRows()
+        if not selected_rows:
+            QMessageBox.warning(self, "提示", "请先选择要删除的题目")
+            return
+        
+        # 收集选中的题目ID
+        question_ids = []
+        for index in selected_rows:
+            item = self.question_table.item(index.row(), 0)
+            if item:
+                question_ids.append(item.data(Qt.UserRole))
+        
+        if not question_ids:
+            return
+        
+        reply = QMessageBox.question(
+            self, "确认批量删除", 
+            f"确定要删除选中的 {len(question_ids)} 道题目吗？\n\n此操作不可恢复！",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            success_count = 0
+            for qid in question_ids:
+                if self.bank_service.delete_question_from_bank(self.current_bank_id, qid):
+                    success_count += 1
+            
             self._load_questions(self.current_bank_id)
             self._load_banks()
+            QMessageBox.information(self, "完成", f"成功删除 {success_count} 道题目")
     
     def _show_question_context_menu(self, pos):
         """显示题目右键菜单"""

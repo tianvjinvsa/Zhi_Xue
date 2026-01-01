@@ -4,12 +4,12 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QFrame, QMessageBox, QProgressBar, QStackedWidget,
-    QListWidget, QListWidgetItem, QSplitter, QSizePolicy
+    QListWidget, QListWidgetItem, QSplitter, QSizePolicy, QComboBox
 )
 from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QFont
 
-from services import ExamService, PaperService, FavoriteService
+from services import ExamService, PaperService, FavoriteService, BankService
 from models import Question, QuestionType
 from .components import QuestionCard
 
@@ -24,6 +24,7 @@ class ExamView(QWidget):
         self.exam_service = ExamService()
         self.paper_service = PaperService()
         self.favorite_service = FavoriteService()
+        self.bank_service = BankService()
         
         self.current_index = 0
         self.questions = []
@@ -33,6 +34,7 @@ class ExamView(QWidget):
         self.remaining_seconds = 0
         self.current_bank_id = ""
         self.current_bank_name = ""
+        self.filter_bank_id = None  # 用于筛选的题库ID
         
         self._setup_ui()
     
@@ -85,6 +87,41 @@ class ExamView(QWidget):
         title_layout.addWidget(tip_label)
         
         layout.addWidget(title_frame)
+        
+        # 题库筛选
+        filter_frame = QFrame()
+        filter_frame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+            }
+        """)
+        filter_layout = QHBoxLayout(filter_frame)
+        filter_layout.setContentsMargins(16, 12, 16, 12)
+        
+        filter_label = QLabel("📚 题库筛选:")
+        filter_label.setStyleSheet("color: #475569; font-size: 14px; border: none;")
+        filter_layout.addWidget(filter_label)
+        
+        self.bank_filter_combo = QComboBox()
+        self.bank_filter_combo.setMinimumWidth(200)
+        self.bank_filter_combo.setStyleSheet("""
+            QComboBox {
+                padding: 8px 12px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                background-color: #f8fafc;
+            }
+            QComboBox:hover {
+                border-color: #667eea;
+            }
+        """)
+        self.bank_filter_combo.currentIndexChanged.connect(self._on_bank_filter_changed)
+        filter_layout.addWidget(self.bank_filter_combo)
+        filter_layout.addStretch()
+        
+        layout.addWidget(filter_frame)
         
         # 试卷列表卡片
         list_frame = QFrame()
@@ -505,16 +542,41 @@ class ExamView(QWidget):
     
     def refresh_papers(self):
         """刷新试卷列表"""
+        # 更新题库筛选下拉框
+        current_filter = self.bank_filter_combo.currentData()
+        self.bank_filter_combo.blockSignals(True)
+        self.bank_filter_combo.clear()
+        self.bank_filter_combo.addItem("全部试卷", None)
+        banks = self.bank_service.get_banks_summary()
+        for bank in banks:
+            self.bank_filter_combo.addItem(f"📚 {bank['name']}", bank['id'])
+        # 恢复之前的选择
+        if current_filter:
+            idx = self.bank_filter_combo.findData(current_filter)
+            if idx >= 0:
+                self.bank_filter_combo.setCurrentIndex(idx)
+        self.bank_filter_combo.blockSignals(False)
+        
         self.paper_list.clear()
         
         papers = self.paper_service.get_all_papers()
         for paper in papers:
+            # 如果设置了筛选，检查试卷是否包含该题库
+            if self.filter_bank_id and self.filter_bank_id not in paper.source_banks:
+                continue
+                
             time_text = f"{paper.time_limit}分钟" if paper.time_limit > 0 else "不限时"
-            item_text = f"{paper.title}\n📝 {len(paper.questions)}题  |  💯 总分{int(paper.total_score)}分  |  ⏱️ {time_text}"
+            shuffle_text = " 🔀" if paper.shuffle_questions else ""
+            item_text = f"{paper.title}{shuffle_text}\n📝 {len(paper.questions)}题  |  💯 总分{int(paper.total_score)}分  |  ⏱️ {time_text}"
             
             item = QListWidgetItem(item_text)
             item.setData(Qt.UserRole, paper.id)
             self.paper_list.addItem(item)
+    
+    def _on_bank_filter_changed(self, index: int):
+        """题库筛选变化"""
+        self.filter_bank_id = self.bank_filter_combo.currentData()
+        self.refresh_papers()
     
     def _on_paper_double_clicked(self, item: QListWidgetItem):
         """双击试卷开始答题"""

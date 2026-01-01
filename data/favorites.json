@@ -1,26 +1,6 @@
 {
   "favorites": [
     {
-      "id": "4082599e-e9f4-41d9-a5cf-5557befdd323",
-      "question_id": "5fe3eabc-53b8-408d-8681-840d24abcbf6",
-      "bank_id": "301e80c0-6b75-447b-8297-13d0069d9388",
-      "bank_name": "习近平新时代中国特色社会主义概论",
-      "question_type": "single",
-      "question_content": "9. 党的（ ）指出，党确立习近平同志党中央的核心、全党的核心地位，确立习近平新时代中国特色社会主义思想的指导地位。",
-      "options": [
-        "A. 党的十八届五中全会",
-        "B. 党的十九届六中全会",
-        "C. 党的十九届五中全会",
-        "D. 党的二十届二中全会"
-      ],
-      "answer": "B",
-      "explanation": "",
-      "difficulty": 3,
-      "tags": [],
-      "favorite_time": "2025-12-26 22:46:16",
-      "note": ""
-    },
-    {
       "id": "a8b4b559-ecbe-40a4-a6f5-7208f5e660cd",
       "question_id": "5a56f68a-2417-4d0a-9c21-ae8749faebcd",
       "bank_id": "a0bc6bb1-8817-4a07-97f2-cb9a48a77c2e",
@@ -58,6 +38,26 @@
       "difficulty": 3,
       "tags": [],
       "favorite_time": "2025-12-27 15:19:40",
+      "note": ""
+    },
+    {
+      "id": "64eb4ba0-882b-411b-99ed-86b1ae7a33d8",
+      "question_id": "3d047a04-eaf4-4515-8be7-c38be8e94935",
+      "bank_id": "c91f3b0e-5501-43cf-b8cd-7a63b14a6c2d",
+      "bank_name": "测试",
+      "question_type": "single",
+      "question_content": "测试题目",
+      "options": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "answer": "A",
+      "explanation": "无",
+      "difficulty": 5,
+      "tags": [],
+      "favorite_time": "2026-01-01 11:55:11",
       "note": ""
     }
   ]

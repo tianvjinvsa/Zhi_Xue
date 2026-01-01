@@ -35,6 +35,7 @@ class Paper:
         "essay": 10.0
     })
     source_banks: List[str] = field(default_factory=list)  # 来源题库ID列表
+    shuffle_questions: bool = False  # 是否打乱题目顺序
     
     def __post_init__(self):
         """初始化后处理"""
@@ -54,7 +55,8 @@ class Paper:
             'total_score': self.total_score,
             'questions': [asdict(q) if isinstance(q, PaperQuestion) else q for q in self.questions],
             'score_rules': self.score_rules,
-            'source_banks': self.source_banks
+            'source_banks': self.source_banks,
+            'shuffle_questions': self.shuffle_questions
         }
         return data
     
@@ -65,7 +67,7 @@ class Paper:
         
         # 过滤有效字段
         valid_fields = ['id', 'title', 'description', 'created_at', 'time_limit', 
-                       'total_score', 'score_rules', 'source_banks']
+                       'total_score', 'score_rules', 'source_banks', 'shuffle_questions']
         paper_data = {k: v for k, v in data.items() if k in valid_fields}
         
         paper = cls(**paper_data)

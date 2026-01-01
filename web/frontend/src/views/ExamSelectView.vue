@@ -5,10 +5,27 @@
       <div class="header-desc">选择一份试卷，检验你的学习成果</div>
     </div>
 
+    <!-- 筛选区域 -->
+    <div class="filter-section" v-if="papers.length > 0">
+      <el-select 
+        v-model="filterBank" 
+        placeholder="按题库筛选" 
+        clearable 
+        class="bank-filter"
+      >
+        <el-option 
+          v-for="bank in relatedBanks" 
+          :key="bank.id" 
+          :label="bank.name" 
+          :value="bank.id" 
+        />
+      </el-select>
+    </div>
+
     <div v-loading="loading">
-      <div v-if="papers.length > 0" class="papers-grid">
+      <div v-if="filteredPapers.length > 0" class="papers-grid">
         <div 
-          v-for="paper in papers" 
+          v-for="paper in filteredPapers" 
           :key="paper.id" 
           class="paper-card"
           @click="startExam(paper.id)"
@@ -45,7 +62,7 @@
         </div>
       </div>
 
-      <div v-else-if="!loading" class="empty-state">
+      <div v-else-if="!loading && papers.length === 0" class="empty-state">
         <div class="empty-icon">
           <el-icon><Document /></el-icon>
         </div>
@@ -55,19 +72,50 @@
           去生成试卷
         </el-button>
       </div>
+      <div v-else-if="!loading && filteredPapers.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <el-icon><Document /></el-icon>
+        </div>
+        <h3>筛选结果为空</h3>
+        <p>当前筛选条件下没有找到相关试卷</p>
+        <el-button type="primary" size="large" @click="filterBank = ''">
+          清除筛选
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { paperApi } from '@/api'
+import { paperApi, bankApi } from '@/api'
 import { Edit, Document, List, Coin, Clock, ArrowRight } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const loading = ref(false)
 const papers = ref([])
+const allBanks = ref([])
+const filterBank = ref('')
+
+// 计算相关题库（只显示试卷来源涉及的题库）
+const relatedBanks = computed(() => {
+  const bankIds = new Set()
+  papers.value.forEach(paper => {
+    if (paper.source_banks) {
+      paper.source_banks.forEach(bankId => bankIds.add(bankId))
+    }
+  })
+  return allBanks.value.filter(b => bankIds.has(b.id))
+})
+
+// 筛选后的试卷
+const filteredPapers = computed(() => {
+  if (!filterBank.value) return papers.value
+  return papers.value.filter(paper => 
+    paper.source_banks && paper.source_banks.includes(filterBank.value)
+  )
+})
 
 const fetchPapers = async () => {
   loading.value = true
@@ -80,25 +128,41 @@ const fetchPapers = async () => {
   }
 }
 
+const fetchBanks = async () => {
+  try {
+    allBanks.value = await bankApi.getAll()
+  } catch (error) {
+    console.error('获取题库失败:', error)
+  }
+}
+
 const startExam = (paperId) => {
   router.push(`/exam/${paperId}`)
 }
 
 onMounted(() => {
   fetchPapers()
+  fetchBanks()
 })
 </script>
 
 <style lang="scss" scoped>
 .exam-select-view {
   .page-header {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     h1 {
       margin-bottom: 8px;
     }
     .header-desc {
       color: #909399;
       font-size: 14px;
+    }
+  }
+
+  .filter-section {
+    margin-bottom: 24px;
+    .bank-filter {
+      width: 200px;
     }
   }
 

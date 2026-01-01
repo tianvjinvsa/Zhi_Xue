@@ -27,6 +27,7 @@ class PaperGenerateConfig:
     max_difficulty: int = 5     # 最大难度
     tags: List[str] = None      # 标签筛选
     score_rules: Dict[str, float] = None  # 分值规则
+    shuffle_questions: bool = False  # 是否打乱题目顺序
     
     def __post_init__(self):
         if self.bank_ids is None:
@@ -152,7 +153,8 @@ class PaperService:
             description=config.description,
             time_limit=config.time_limit,
             score_rules=config.score_rules,
-            source_banks=config.bank_ids
+            source_banks=config.bank_ids,
+            shuffle_questions=config.shuffle_questions
         )
         
         selected_ids = set()

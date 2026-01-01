@@ -277,6 +277,8 @@ const fetchFavorites = async () => {
     const data = await favoriteApi.getAll()
     favorites.value = data.map(f => ({ ...f, showAnswer: false }))
     statistics.value = await favoriteApi.getStatistics()
+    // 获取收藏中涉及的题库
+    await fetchRelatedBanks()
   } catch (error) {
     console.error('获取收藏失败:', error)
   } finally {
@@ -284,20 +286,28 @@ const fetchFavorites = async () => {
   }
 }
 
-const fetchBanks = async () => {
+const fetchRelatedBanks = async () => {
   try {
-    banks.value = await bankApi.getAll()
-  } catch (error) {}
+    // 获取收藏题目涉及的所有题库ID
+    const bankIds = [...new Set(favorites.value.map(f => f.bank_id).filter(Boolean))]
+    if (bankIds.length === 0) {
+      banks.value = []
+      return
+    }
+    // 获取所有题库，只保留相关的
+    const allBanks = await bankApi.getAll()
+    banks.value = allBanks.filter(b => bankIds.includes(b.id))
+  } catch (error) {
+    console.error('获取题库失败:', error)
+  }
 }
 
 const removeFavorite = async (questionId) => {
   try {
-    const fav = favorites.value.find(f => f.question_id === questionId)
-    if (fav) {
-      await favoriteApi.remove(fav.id)
-      ElMessage.success('已取消收藏')
-      fetchFavorites()
-    }
+    // 直接使用 question_id 调用API
+    await favoriteApi.remove(questionId)
+    ElMessage.success('已取消收藏')
+    fetchFavorites()
   } catch (error) {
     ElMessage.error('操作失败')
   }
@@ -321,7 +331,7 @@ const editNote = (fav) => {
 
 const saveNote = async () => {
   try {
-    await favoriteApi.updateNote(currentFav.value.id, editingNote.value)
+    await favoriteApi.updateNote(currentFav.value.question_id, editingNote.value)
     ElMessage.success('笔记已保存')
     noteDialogVisible.value = false
     fetchFavorites()
@@ -332,7 +342,6 @@ const saveNote = async () => {
 
 onMounted(() => {
   fetchFavorites()
-  fetchBanks()
 })
 </script>
 

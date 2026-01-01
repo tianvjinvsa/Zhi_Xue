@@ -6,6 +6,19 @@
         <p class="subtitle">管理已生成的试卷，查看详情或开始练习</p>
       </div>
       <div class="header-actions">
+        <el-select 
+          v-model="filterBank" 
+          placeholder="按题库筛选" 
+          clearable 
+          class="bank-filter"
+        >
+          <el-option 
+            v-for="bank in relatedBanks" 
+            :key="bank.id" 
+            :label="bank.name" 
+            :value="bank.id" 
+          />
+        </el-select>
         <el-button type="primary" @click="$router.push('/papers/create')" class="create-btn">
           <el-icon><Plus /></el-icon>生成新试卷
         </el-button>
@@ -13,9 +26,9 @@
     </div>
 
     <div v-loading="loading" class="content-section">
-      <div v-if="papers.length > 0" class="papers-grid">
+      <div v-if="filteredPapers.length > 0" class="papers-grid">
         <el-card 
-          v-for="paper in papers" 
+          v-for="paper in filteredPapers" 
           :key="paper.id" 
           class="paper-card" 
           shadow="hover"
@@ -75,7 +88,7 @@
         </el-card>
       </div>
 
-      <div v-else-if="!loading" class="empty-state">
+      <div v-else-if="!loading && papers.length === 0" class="empty-state">
         <div class="empty-illustration">
           <el-icon><Document /></el-icon>
         </div>
@@ -83,6 +96,16 @@
         <p>您还没有生成过试卷，快去创建一个吧！</p>
         <el-button type="primary" round @click="$router.push('/papers/create')">
           立即生成
+        </el-button>
+      </div>
+      <div v-else-if="!loading && filteredPapers.length === 0" class="empty-state">
+        <div class="empty-illustration">
+          <el-icon><Document /></el-icon>
+        </div>
+        <h3>筛选结果为空</h3>
+        <p>当前筛选条件下没有找到相关试卷</p>
+        <el-button type="primary" round @click="filterBank = ''">
+          清除筛选
         </el-button>
       </div>
     </div>
@@ -114,16 +137,7 @@
               <el-tag size="small" :type="getTypeTag(question.type)" effect="dark">
                 {{ getTypeLabel(question.type) }}
               </el-tag>
-              <div class="q-actions">
-                <el-button 
-                  link 
-                  :type="previewFavoriteStatus[question.id] ? 'warning' : 'info'"
-                  @click="togglePreviewFavorite(question)"
-                >
-                  <el-icon><StarFilled v-if="previewFavoriteStatus[question.id]" /><Star v-else /></el-icon>
-                  {{ previewFavoriteStatus[question.id] ? '已收藏' : '收藏' }}
-                </el-button>
-              </div>
+              <!-- 预览模式不显示收藏按钮 -->
             </div>
             <div class="q-body">
               <div class="q-text">{{ question.question }}</div>
@@ -154,10 +168,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { paperApi, favoriteApi } from '@/api'
+import { paperApi, favoriteApi, bankApi } from '@/api'
 import { 
   Document, Plus, Files, Calendar, MoreFilled, 
   Delete, Star, StarFilled 
@@ -166,11 +180,32 @@ import {
 const router = useRouter()
 const loading = ref(false)
 const papers = ref([])
+const allBanks = ref([])
+const filterBank = ref('')
 const previewVisible = ref(false)
 const previewLoading = ref(false)
 const previewPaperData = ref(null)
 const previewQuestions = ref([])
 const previewFavoriteStatus = ref({})
+
+// 计算相关题库（只显示试卷来源涉及的题库）
+const relatedBanks = computed(() => {
+  const bankIds = new Set()
+  papers.value.forEach(paper => {
+    if (paper.source_banks) {
+      paper.source_banks.forEach(bankId => bankIds.add(bankId))
+    }
+  })
+  return allBanks.value.filter(b => bankIds.has(b.id))
+})
+
+// 筛选后的试卷
+const filteredPapers = computed(() => {
+  if (!filterBank.value) return papers.value
+  return papers.value.filter(paper => 
+    paper.source_banks && paper.source_banks.includes(filterBank.value)
+  )
+})
 
 const getTypeLabel = (type) => {
   const labels = { single: '单选题', multiple: '多选题', judge: '判断题', fill: '填空题' }
@@ -274,8 +309,17 @@ const startExam = (id) => {
   router.push(`/exam/${id}`)
 }
 
+const fetchBanks = async () => {
+  try {
+    allBanks.value = await bankApi.getAll()
+  } catch (error) {
+    console.error('获取题库失败:', error)
+  }
+}
+
 onMounted(() => {
   fetchPapers()
+  fetchBanks()
 })
 </script>
 
@@ -301,6 +345,16 @@ onMounted(() => {
         margin: 8px 0 0;
         color: #909399;
         font-size: 14px;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+
+      .bank-filter {
+        width: 180px;
       }
     }
 

@@ -51,6 +51,10 @@
                   <el-icon><MagicStick /></el-icon>
                   <span>AI 智能导入</span>
                 </el-menu-item>
+                <el-menu-item index="/market">
+                  <el-icon><ShoppingCart /></el-icon>
+                  <span>题库商城</span>
+                </el-menu-item>
                 <el-menu-item index="/settings">
                   <el-icon><Setting /></el-icon>
                   <span>系统设置</span>
@@ -67,7 +71,7 @@
             >
               <el-menu-item index="/about">
                 <el-icon><InfoFilled /></el-icon>
-                <span>关于系统</span>
+                <span>关于作者</span>
               </el-menu-item>
             </el-menu>
           </div>
@@ -94,7 +98,7 @@ import { useRoute } from 'vue-router'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import { 
   Document, Folder, Files, EditPen, DataAnalysis, 
-  Star, MagicStick, Setting, InfoFilled 
+  Star, MagicStick, Setting, InfoFilled, ShoppingCart 
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

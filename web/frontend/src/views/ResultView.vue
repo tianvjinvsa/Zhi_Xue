@@ -3,6 +3,19 @@
     <div class="page-header">
       <h1><el-icon><DataAnalysis /></el-icon>成绩查看</h1>
       <div class="header-actions">
+        <el-select 
+          v-model="filterBank" 
+          placeholder="按题库筛选" 
+          clearable 
+          class="bank-filter"
+        >
+          <el-option 
+            v-for="bank in relatedBanks" 
+            :key="bank.id" 
+            :label="bank.name" 
+            :value="bank.id" 
+          />
+        </el-select>
         <el-button type="primary" plain @click="fetchResults">
           <el-icon><Refresh /></el-icon>刷新
         </el-button>
@@ -10,13 +23,13 @@
     </div>
 
     <!-- 概览统计 -->
-    <div class="stats-overview" v-if="results.length > 0">
+    <div class="stats-overview" v-if="filteredResults.length > 0">
       <el-row :gutter="20">
         <el-col :span="6">
           <div class="stat-box total">
             <div class="stat-icon"><Document /></div>
             <div class="stat-data">
-              <div class="value">{{ results.length }}</div>
+              <div class="value">{{ filteredResults.length }}</div>
               <div class="label">累计答题</div>
             </div>
           </div>
@@ -53,7 +66,7 @@
 
     <div class="card-container">
       <el-table 
-        :data="results" 
+        :data="filteredResults" 
         v-loading="loading" 
         style="width: 100%"
         :header-cell-style="{ background: '#f8f9fa', color: '#606266', fontWeight: '600' }"
@@ -120,6 +133,15 @@
           立即去答题
         </el-button>
       </div>
+      <div v-else-if="filteredResults.length === 0 && !loading" class="empty-state">
+        <div class="empty-illustration">
+          <el-icon><DataAnalysis /></el-icon>
+        </div>
+        <p>当前筛选条件下没有找到相关成绩</p>
+        <el-button type="primary" round @click="filterBank = ''">
+          清除筛选
+        </el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -128,31 +150,62 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { resultApi } from '@/api'
+import { resultApi, paperApi, bankApi } from '@/api'
 import { DataAnalysis, Document, Refresh, PieChart, Trophy, Timer } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const loading = ref(false)
 const results = ref([])
+const papers = ref([])
+const allBanks = ref([])
+const filterBank = ref('')
+
+// 建立 paper_id 到 source_banks 的映射
+const paperBanksMap = computed(() => {
+  const map = {}
+  papers.value.forEach(paper => {
+    map[paper.id] = paper.source_banks || []
+  })
+  return map
+})
+
+// 计算相关题库（只显示成绩中涉及的题库）
+const relatedBanks = computed(() => {
+  const bankIds = new Set()
+  results.value.forEach(result => {
+    const sourceBanks = paperBanksMap.value[result.paper_id] || []
+    sourceBanks.forEach(bankId => bankIds.add(bankId))
+  })
+  return allBanks.value.filter(b => bankIds.has(b.id))
+})
+
+// 筛选后的成绩
+const filteredResults = computed(() => {
+  if (!filterBank.value) return results.value
+  return results.value.filter(result => {
+    const sourceBanks = paperBanksMap.value[result.paper_id] || []
+    return sourceBanks.includes(filterBank.value)
+  })
+})
 
 // 统计计算
 const averageAccuracy = computed(() => {
-  if (results.value.length === 0) return 0
-  const totalAccuracy = results.value.reduce((acc, curr) => {
+  if (filteredResults.value.length === 0) return 0
+  const totalAccuracy = filteredResults.value.reduce((acc, curr) => {
     return acc + (curr.user_score / curr.total_score)
   }, 0)
-  return Math.round((totalAccuracy / results.value.length) * 100)
+  return Math.round((totalAccuracy / filteredResults.value.length) * 100)
 })
 
 const highestScore = computed(() => {
-  if (results.value.length === 0) return 0
-  return Math.max(...results.value.map(r => r.user_score))
+  if (filteredResults.value.length === 0) return 0
+  return Math.max(...filteredResults.value.map(r => r.user_score))
 })
 
 const totalTimeSpent = computed(() => {
-  if (results.value.length === 0) return '0分'
+  if (filteredResults.value.length === 0) return '0分'
   let totalSeconds = 0
-  results.value.forEach(r => {
+  filteredResults.value.forEach(r => {
     if (r.start_time && r.end_time) {
       totalSeconds += (new Date(r.end_time) - new Date(r.start_time)) / 1000
     }
@@ -206,6 +259,22 @@ const fetchResults = async () => {
   }
 }
 
+const fetchPapers = async () => {
+  try {
+    papers.value = await paperApi.getAll()
+  } catch (error) {
+    console.error('获取试卷列表失败:', error)
+  }
+}
+
+const fetchBanks = async () => {
+  try {
+    allBanks.value = await bankApi.getAll()
+  } catch (error) {
+    console.error('获取题库失败:', error)
+  }
+}
+
 const viewDetail = (id) => {
   router.push(`/results/${id}`)
 }
@@ -222,11 +291,30 @@ const deleteResult = async (id) => {
 
 onMounted(() => {
   fetchResults()
+  fetchPapers()
+  fetchBanks()
 })
 </script>
 
 <style lang="scss" scoped>
 .result-view {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+
+      .bank-filter {
+        width: 180px;
+      }
+    }
+  }
+
   .stats-overview {
     margin-bottom: 24px;
     

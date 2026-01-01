@@ -49,6 +49,7 @@ class Question:
     explanation: str = ""
     difficulty: int = 3  # 1-5难度等级
     tags: List[str] = field(default_factory=list)
+    chapter: str = ""  # 章节/分类
     created_at: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     updated_at: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     source: str = "manual"  # manual, ai_generated, imported

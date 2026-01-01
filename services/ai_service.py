@@ -199,20 +199,39 @@ class AIService:
         if use_vision and ai_config.vision_model:
             model = ai_config.vision_model
         
-        print(f"正在调用 AI API, 模型: {model}, Base URL: {ai_config.api_base_url}")
+        print(f"\n{'='*50}")
+        print(f"[AI] 正在调用 AI API")
+        print(f"[AI] 模型: {model}")
+        print(f"[AI] Base URL: {ai_config.api_base_url or '默认'}")
+        print(f"[AI] Max Tokens: {'不限制' if ai_config.max_tokens == 0 else ai_config.max_tokens}")
+        print(f"[AI] 思考时间限制: {'不限制' if ai_config.thinking_time == 0 else f'{ai_config.thinking_time}秒'}")
+        print(f"{'='*50}")
         
         try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                max_tokens=ai_config.max_tokens,
-                temperature=ai_config.temperature
-            )
+            # 构建API调用参数
+            api_kwargs = {
+                'model': model,
+                'messages': messages,
+                'temperature': ai_config.temperature
+            }
+            
+            # 只有max_tokens>0时才传递该参数
+            if ai_config.max_tokens > 0:
+                api_kwargs['max_tokens'] = ai_config.max_tokens
+            
+            response = client.chat.completions.create(**api_kwargs)
             content = response.choices[0].message.content
-            print(f"AI 响应成功，长度: {len(content)}")
+            
+            # 输出思考过程和结果到CMD
+            print(f"\n[AI] ✅ 响应成功")
+            print(f"[AI] 响应长度: {len(content)} 字符")
+            print(f"[AI] 响应内容预览: {content[:200]}..." if len(content) > 200 else f"[AI] 响应内容: {content}")
+            print(f"{'='*50}\n")
+            
             return content
         except Exception as e:
-            print(f"AI 调用失败: {str(e)}")
+            print(f"\n[AI] ❌ 调用失败: {str(e)}")
+            print(f"{'='*50}\n")
             raise e
     
     def _parse_json_response(self, response: str) -> Dict:

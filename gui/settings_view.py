@@ -81,6 +81,23 @@ class SettingsView(QWidget):
         self.vision_model_input.setPlaceholderText("如: gpt-4o（需要支持图片的模型）")
         ai_layout.addRow("视觉模型:", self.vision_model_input)
         
+        # Max Tokens设置
+        self.max_tokens_spin = QSpinBox()
+        self.max_tokens_spin.setRange(0, 128000)
+        self.max_tokens_spin.setValue(0)
+        self.max_tokens_spin.setSpecialValueText("不限制")
+        self.max_tokens_spin.setToolTip("设置为0表示不限制输出长度")
+        ai_layout.addRow("Max Tokens:", self.max_tokens_spin)
+        
+        # 思考时间设置
+        self.thinking_time_spin = QSpinBox()
+        self.thinking_time_spin.setRange(0, 600)
+        self.thinking_time_spin.setValue(0)
+        self.thinking_time_spin.setSuffix(" 秒")
+        self.thinking_time_spin.setSpecialValueText("不限制")
+        self.thinking_time_spin.setToolTip("模型思考时间限制，0表示不限制")
+        ai_layout.addRow("思考时间:", self.thinking_time_spin)
+        
         # 测试连接
         test_btn = QPushButton("🔗 测试连接")
         test_btn.setObjectName("secondaryButton")
@@ -142,6 +159,8 @@ class SettingsView(QWidget):
         self.base_url_input.setText(ai_config.api_base_url)
         self.model_input.setText(ai_config.model)
         self.vision_model_input.setText(ai_config.vision_model)
+        self.max_tokens_spin.setValue(ai_config.max_tokens)
+        self.thinking_time_spin.setValue(ai_config.thinking_time)
         
         # 应用设置
         app_config = config.app_config
@@ -158,6 +177,8 @@ class SettingsView(QWidget):
         config.ai_config.api_base_url = self.base_url_input.text().strip()
         config.ai_config.model = self.model_input.text().strip() or "gpt-4o-mini"
         config.ai_config.vision_model = self.vision_model_input.text().strip() or "gpt-4o"
+        config.ai_config.max_tokens = self.max_tokens_spin.value()
+        config.ai_config.thinking_time = self.thinking_time_spin.value()
         
         # 应用设置
         config.app_config.auto_save = self.auto_save_check.isChecked()
@@ -211,6 +232,8 @@ class SettingsView(QWidget):
             self.base_url_input.clear()
             self.model_input.setText("gpt-4o-mini")
             self.vision_model_input.setText("gpt-4o")
+            self.max_tokens_spin.setValue(0)
+            self.thinking_time_spin.setValue(0)
             self.auto_save_check.setChecked(True)
             self.partial_score_check.setChecked(True)
             self.default_time_spin.setValue(60)

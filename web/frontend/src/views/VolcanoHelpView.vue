@@ -24,10 +24,24 @@
               配置视频教程
             </h3>
             <div class="video-container">
-              <video controls width="100%">
-                <source src="/video/教学视频.mp4" type="video/mp4">
-                您的浏览器不支持视频播放。
-              </video>
+              <iframe 
+                src="//player.bilibili.com/player.html?bvid=BV1oqBkBrEcs&page=1&autoplay=0"
+                scrolling="no" 
+                border="0" 
+                frameborder="no" 
+                framespacing="0" 
+                allowfullscreen="true"
+                style="width: 100%; height: 500px;"
+              ></iframe>
+            </div>
+            <div class="video-link">
+              <el-link 
+                type="primary" 
+                href="https://www.bilibili.com/video/BV1oqBkBrEcs" 
+                target="_blank"
+              >
+                在B站观看完整视频 →
+              </el-link>
             </div>
           </section>
 

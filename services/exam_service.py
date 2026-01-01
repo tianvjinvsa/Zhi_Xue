@@ -2,6 +2,8 @@
 答题与评分服务
 """
 import json
+import random
+import copy
 from pathlib import Path
 from typing import List, Optional, Dict, Union
 from datetime import datetime
@@ -41,17 +43,43 @@ class ExamService:
     
     def start_exam(self, paper_id: str) -> Optional[ExamResult]:
         """
-        开始答题
+        开始答题或恢复已有的考试
         返回考试结果对象用于记录答题
         """
         paper = self.paper_service.get_paper(paper_id)
         if not paper:
             return None
         
+        # 检查是否已有进行中的考试（基于当前内存状态）
+        if self._current_exam and self._current_exam.paper_id == paper_id and self._current_exam.status == "in_progress":
+            return self._current_exam
+        
+        # 检查是否有未完成的考试记录（从文件中恢复）
+        existing_exam = self._find_in_progress_exam(paper_id)
+        if existing_exam:
+            self._current_exam = existing_exam
+            self._current_paper = paper
+            # 恢复题目缓存
+            questions = self.paper_service.get_paper_questions(paper_id)
+            if questions:
+                self._questions_cache = {q.id: q for q in questions}
+            return self._current_exam
+        
         # 获取题目
         questions = self.paper_service.get_paper_questions(paper_id)
         if not questions:
             return None
+        
+        # 如果需要打乱题目
+        if paper.shuffle_questions:
+            # 深拷贝题目列表以避免修改原始数据
+            questions = copy.deepcopy(questions)
+            # 打乱题目顺序
+            random.shuffle(questions)
+            # 打乱每个题目的选项(仅限单选和多选题)
+            for q in questions:
+                if q.type in ['single', 'multiple'] and q.options:
+                    q.options, q.answer = self._shuffle_options(q.options, q.answer, q.type)
         
         # 缓存题目
         self._questions_cache = {q.id: q for q in questions}
@@ -65,22 +93,84 @@ class ExamService:
             status="in_progress"
         )
         
-        # 初始化每道题的结果记录
-        for pq in paper.questions:
-            if pq.question_id in self._questions_cache:
-                q = self._questions_cache[pq.question_id]
-                qr = QuestionResult(
-                    question_id=pq.question_id,
-                    question_type=pq.type,
-                    correct_answer=q.answer,
-                    max_score=pq.score
-                )
-                self._current_exam.details.append(qr)
+        # 初始化每道题的结果记录 - 按打乱后的顺序
+        for q in questions:
+            qr = QuestionResult(
+                question_id=q.id,
+                question_type=q.type,
+                correct_answer=q.answer,
+                max_score=self._get_question_score(paper, q.id)
+            )
+            self._current_exam.details.append(qr)
         
         # 自动保存
         self._save_result(self._current_exam)
         
         return self._current_exam
+    
+    def _find_in_progress_exam(self, paper_id: str) -> Optional[ExamResult]:
+        """查找指定试卷的进行中考试"""
+        results_dir = self._get_results_dir()
+        for file_path in results_dir.glob("result_*.json"):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                if data.get('paper_id') == paper_id and data.get('status') == 'in_progress':
+                    return ExamResult.from_dict(data)
+            except:
+                continue
+        return None
+    
+    def _get_question_score(self, paper: Paper, question_id: str) -> float:
+        """获取题目分值"""
+        for pq in paper.questions:
+            if pq.question_id == question_id:
+                return pq.score
+        return 5.0
+    
+    def _shuffle_options(self, options: List[str], answer, question_type: str) -> tuple:
+        """
+        打乱选项并更新答案
+        返回: (打乱后的选项, 更新后的答案)
+        """
+        if not options:
+            return options, answer
+        
+        # 解析选项，提取字母和内容
+        option_contents = []
+        for opt in options:
+            # 处理格式如 "A. xxx" 或 "A、xxx"
+            if len(opt) >= 2 and opt[0].isalpha() and opt[1] in ['.', '、', ' ', ':']:
+                content = opt[2:].strip()
+            else:
+                content = opt
+            option_contents.append(content)
+        
+        # 建立原始索引映射
+        original_letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'][:len(options)]
+        indices = list(range(len(options)))
+        
+        # 打乱索引
+        random.shuffle(indices)
+        
+        # 生成新的选项列表
+        new_options = []
+        for i, idx in enumerate(indices):
+            new_letter = original_letters[i]
+            new_options.append(f"{new_letter}. {option_contents[idx]}")
+        
+        # 更新答案
+        old_to_new = {original_letters[old_idx]: original_letters[new_idx] 
+                      for new_idx, old_idx in enumerate(indices)}
+        
+        if question_type == 'multiple' and isinstance(answer, list):
+            # 多选题
+            new_answer = sorted([old_to_new.get(a, a) for a in answer])
+        else:
+            # 单选题
+            new_answer = old_to_new.get(answer, answer)
+        
+        return new_options, new_answer
     
     def get_current_exam(self) -> Optional[ExamResult]:
         """获取当前考试"""

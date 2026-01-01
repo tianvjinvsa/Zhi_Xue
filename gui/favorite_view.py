@@ -502,6 +502,57 @@ class FavoriteView(QWidget):
         
         layout.addWidget(answer_frame)
         
+        # 笔记编辑区域
+        note_frame = QFrame()
+        note_frame.setStyleSheet("""
+            QFrame {
+                background-color: #fef3c7;
+                border: 1px solid #fcd34d;
+                border-radius: 12px;
+            }
+        """)
+        note_layout = QVBoxLayout(note_frame)
+        note_layout.setContentsMargins(20, 16, 20, 16)
+        
+        note_title = QLabel("📝 我的笔记")
+        note_title.setStyleSheet("color: #92400e; font-weight: bold; font-size: 14px;")
+        note_layout.addWidget(note_title)
+        
+        self.note_edit = QTextEdit()
+        self.note_edit.setPlaceholderText("在这里记录你的学习笔记...")
+        self.note_edit.setText(fav.note if fav.note else "")
+        self.note_edit.setMaximumHeight(100)
+        self.note_edit.setStyleSheet("""
+            QTextEdit {
+                background-color: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 8px;
+                font-size: 13px;
+            }
+        """)
+        note_layout.addWidget(self.note_edit)
+        
+        save_note_btn = QPushButton("💾 保存笔记")
+        save_note_btn.setFixedHeight(32)
+        save_note_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #d97706;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 0 16px;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #b45309;
+            }
+        """)
+        save_note_btn.clicked.connect(lambda: self._save_note(fav.question_id, self.note_edit.toPlainText()))
+        note_layout.addWidget(save_note_btn, alignment=Qt.AlignRight)
+        
+        layout.addWidget(note_frame)
+        
         layout.addStretch()
         
         # 关闭按钮
@@ -525,6 +576,13 @@ class FavoriteView(QWidget):
         layout.addWidget(close_btn, alignment=Qt.AlignRight)
         
         dialog.exec()
+    
+    def _save_note(self, question_id: str, note: str):
+        """保存笔记"""
+        if self.favorite_service.update_note(question_id, note):
+            QMessageBox.information(self, "成功", "笔记已保存")
+        else:
+            QMessageBox.warning(self, "失败", "保存笔记失败")
     
     def _remove_favorite(self, question_id: str):
         """移除收藏"""

@@ -4,12 +4,12 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QScrollArea, QFrame, QTableWidget, QTableWidgetItem, QHeaderView,
-    QStackedWidget, QSizePolicy
+    QStackedWidget, QSizePolicy, QComboBox
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
-from services import ExamService
+from services import ExamService, BankService, PaperService
 from models import ExamResult, Question, QuestionType
 from .components import QuestionCard
 
@@ -22,6 +22,9 @@ class ResultView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.exam_service = ExamService()
+        self.bank_service = BankService()
+        self.paper_service = PaperService()
+        self.filter_bank_id = None  # 用于筛选的题库ID
         
         self._setup_ui()
     
@@ -77,6 +80,41 @@ class ResultView(QWidget):
         # 统计卡片
         stats_widget = self._create_stats_cards()
         layout.addWidget(stats_widget)
+        
+        # 筛选框
+        filter_frame = QFrame()
+        filter_frame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+            }
+        """)
+        filter_layout = QHBoxLayout(filter_frame)
+        filter_layout.setContentsMargins(16, 12, 16, 12)
+        
+        filter_label = QLabel("📚 题库筛选:")
+        filter_label.setStyleSheet("color: #475569; font-size: 14px; border: none;")
+        filter_layout.addWidget(filter_label)
+        
+        self.bank_filter_combo = QComboBox()
+        self.bank_filter_combo.setMinimumWidth(200)
+        self.bank_filter_combo.setStyleSheet("""
+            QComboBox {
+                padding: 8px 12px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                background-color: #f8fafc;
+            }
+            QComboBox:hover {
+                border-color: #667eea;
+            }
+        """)
+        self.bank_filter_combo.currentIndexChanged.connect(self._on_bank_filter_changed)
+        filter_layout.addWidget(self.bank_filter_combo)
+        filter_layout.addStretch()
+        
+        layout.addWidget(filter_frame)
         
         # 历史表格卡片
         table_frame = QFrame()
@@ -283,8 +321,28 @@ class ResultView(QWidget):
     
     def refresh(self):
         """刷新数据"""
+        # 更新题库筛选下拉框
+        current_filter = self.bank_filter_combo.currentData()
+        self.bank_filter_combo.blockSignals(True)
+        self.bank_filter_combo.clear()
+        self.bank_filter_combo.addItem("全部记录", None)
+        banks = self.bank_service.get_banks_summary()
+        for bank in banks:
+            self.bank_filter_combo.addItem(f"{bank['name']}", bank['id'])
+        # 恢复之前的选择
+        if current_filter:
+            idx = self.bank_filter_combo.findData(current_filter)
+            if idx >= 0:
+                self.bank_filter_combo.setCurrentIndex(idx)
+        self.bank_filter_combo.blockSignals(False)
+        
         self._load_history()
         self._update_stats()
+    
+    def _on_bank_filter_changed(self, index: int):
+        """题库筛选变化"""
+        self.filter_bank_id = self.bank_filter_combo.currentData()
+        self._load_history()
     
     def _load_history(self):
         """加载历史记录"""
@@ -293,6 +351,12 @@ class ResultView(QWidget):
         results = self.exam_service.get_all_results()
         
         for result in results:
+            # 如果设置了筛选，检查试卷是否包含该题库
+            if self.filter_bank_id:
+                paper = self.paper_service.get_paper(result.paper_id)
+                if paper and self.filter_bank_id not in paper.source_banks:
+                    continue
+            
             row = self.history_table.rowCount()
             self.history_table.insertRow(row)
             

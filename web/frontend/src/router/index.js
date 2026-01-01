@@ -70,6 +70,11 @@ const routes = [
     name: "VolcanoHelp",
     component: () => import("@/views/VolcanoHelpView.vue"),
   },
+  {
+    path: "/market",
+    name: "Market",
+    component: () => import("@/views/MarketView.vue"),
+  },
 ];
 
 const router = createRouter({

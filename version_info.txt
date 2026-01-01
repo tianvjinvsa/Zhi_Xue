@@ -1,0 +1,51 @@
+# UTF-8
+#
+# 智题坊 - Windows 版本信息文件
+# 用于 PyInstaller 打包时嵌入版本信息
+#
+
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    # filevers 和 prodvers 应该总是4个元素的元组: (1, 2, 3, 4)
+    # 设置为程序的版本号
+    filevers=(1, 0, 0, 0),
+    prodvers=(1, 0, 0, 0),
+    # 包含以下标志的位字段
+    # 0x1 VS_FF_DEBUG
+    # 0x2 VS_FF_PRERELEASE
+    # 0x4 VS_FF_PATCHED
+    # 0x8 VS_FF_PRIVATEBUILD
+    # 0x10 VS_FF_INFOINFERRED
+    # 0x20 VS_FF_SPECIALBUILD
+    mask=0x3f,
+    flags=0x0,
+    # VOS_NT_WINDOWS32
+    OS=0x40004,
+    # VFT_APP
+    fileType=0x1,
+    # 文件类型子类型，在 fileType 不是 VFT_DRV/VFT_FONT 时为 0
+    subtype=0x0,
+    # Creation date and time stamp.
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo(
+      [
+        StringTable(
+          '080404b0',  # 中文简体
+          [
+            StringStruct('CompanyName', 'CodeArtist'),
+            StringStruct('FileDescription', '智题坊 - 智能题库管理与考试系统'),
+            StringStruct('FileVersion', '1.0.0.0'),
+            StringStruct('InternalName', 'zhitifang'),
+            StringStruct('LegalCopyright', 'Copyright © 2024 CodeArtist. All rights reserved.'),
+            StringStruct('OriginalFilename', '智题坊.exe'),
+            StringStruct('ProductName', '智题坊'),
+            StringStruct('ProductVersion', '1.0.0.0'),
+          ]
+        )
+      ]
+    ),
+    VarFileInfo([VarStruct('Translation', [2052, 1200])])  # 中文简体
+  ]
+)

@@ -81,6 +81,7 @@ class QuestionCreate(BaseModel):
     explanation: str = ""
     difficulty: int = 3
     tags: List[str] = []
+    chapter: str = ""
 
 
 class QuestionUpdate(BaseModel):
@@ -91,6 +92,7 @@ class QuestionUpdate(BaseModel):
     explanation: Optional[str] = None
     difficulty: Optional[int] = None
     tags: Optional[List[str]] = None
+    chapter: Optional[str] = None
 
 
 class BatchQuestionCreate(BaseModel):
@@ -101,12 +103,18 @@ class BankCreate(BaseModel):
     name: str
     description: str = ""
     subject: str = ""
+    chapters: List[str] = []
 
 
 class BankUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     subject: Optional[str] = None
+    chapters: Optional[List[str]] = None
+
+
+class ChapterCreate(BaseModel):
+    chapter: str
 
 
 class PaperGenerateRequest(BaseModel):
@@ -191,6 +199,10 @@ def create_bank(data: BankCreate):
         description=data.description,
         subject=data.subject
     )
+    # 设置章节
+    if data.chapters:
+        bank.chapters = data.chapters
+        bank_service.update_bank(bank)
     return {"id": bank.id, "message": "创建成功"}
 
 
@@ -216,6 +228,8 @@ def update_bank(bank_id: str, data: BankUpdate):
         bank.description = data.description
     if data.subject is not None:
         bank.subject = data.subject
+    if data.chapters is not None:
+        bank.chapters = data.chapters
     
     bank_service.update_bank(bank)
     return {"message": "更新成功"}
@@ -227,6 +241,43 @@ def delete_bank(bank_id: str):
     if bank_service.delete_bank(bank_id):
         return {"message": "删除成功"}
     raise HTTPException(status_code=404, detail="题库不存在")
+
+
+# ============ 章节 API ============
+
+@app.get("/api/banks/{bank_id}/chapters")
+def get_bank_chapters(bank_id: str):
+    """获取题库章节列表"""
+    bank = bank_service.get_bank(bank_id)
+    if not bank:
+        raise HTTPException(status_code=404, detail="题库不存在")
+    return {"chapters": bank.get_all_chapters()}
+
+
+@app.post("/api/banks/{bank_id}/chapters")
+def add_chapter(bank_id: str, data: ChapterCreate):
+    """添加章节"""
+    bank = bank_service.get_bank(bank_id)
+    if not bank:
+        raise HTTPException(status_code=404, detail="题库不存在")
+    
+    if bank.add_chapter(data.chapter):
+        bank_service.update_bank(bank)
+        return {"message": "章节添加成功"}
+    raise HTTPException(status_code=400, detail="章节已存在或名称为空")
+
+
+@app.delete("/api/banks/{bank_id}/chapters/{chapter_name}")
+def remove_chapter(bank_id: str, chapter_name: str):
+    """删除章节"""
+    bank = bank_service.get_bank(bank_id)
+    if not bank:
+        raise HTTPException(status_code=404, detail="题库不存在")
+    
+    if bank.remove_chapter(chapter_name):
+        bank_service.update_bank(bank)
+        return {"message": "章节删除成功"}
+    raise HTTPException(status_code=404, detail="章节不存在")
 
 
 # ============ 题目 API ============
@@ -250,7 +301,8 @@ def add_question(bank_id: str, data: QuestionCreate):
         answer=data.answer,
         explanation=data.explanation,
         difficulty=data.difficulty,
-        tags=data.tags
+        tags=data.tags,
+        chapter=data.chapter
     )
     
     if bank_service.add_question_to_bank(bank_id, question):
@@ -270,7 +322,8 @@ def batch_add_questions(bank_id: str, data: BatchQuestionCreate):
             answer=q_data.answer,
             explanation=q_data.explanation,
             difficulty=q_data.difficulty,
-            tags=q_data.tags
+            tags=q_data.tags,
+            chapter=q_data.chapter
         )
         if bank_service.add_question_to_bank(bank_id, question):
             count += 1
@@ -303,6 +356,8 @@ def update_question(bank_id: str, question_id: str, data: QuestionUpdate):
         question.difficulty = data.difficulty
     if data.tags is not None:
         question.tags = data.tags
+    if data.chapter is not None:
+        question.chapter = data.chapter
     
     bank_service.update_bank(bank)
     return {"message": "更新成功"}
@@ -329,7 +384,8 @@ def get_all_papers():
         "created_at": p.created_at,
         "time_limit": p.time_limit,
         "total_score": p.total_score,
-        "question_count": len(p.questions)
+        "question_count": len(p.questions),
+        "source_banks": p.source_banks  # 添加来源题库信息用于筛选
     } for p in papers]
 
 
@@ -553,29 +609,32 @@ def select_folder():
         import subprocess
         
         # 使用 PowerShell 脚本打开文件夹选择对话框，避免打包后 tkinter 失效的问题
+        # 使用 -sta 参数确保在单线程单元模式下运行，这是 Windows Forms 的要求
         ps_script = """
         Add-Type -AssemblyName System.Windows.Forms
+        [System.Windows.Forms.Application]::EnableVisualStyles()
         $f = New-Object System.Windows.Forms.FolderBrowserDialog
         $f.Description = "选择文件夹"
         $f.ShowNewFolderButton = $true
-        if ($f.ShowDialog() -eq "OK") {
+        $result = $f.ShowDialog()
+        if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
             Write-Host "__RESULT__:$($f.SelectedPath)"
         }
         """
         
-        # Windows下隐藏控制台窗口
-        startupinfo = None
+        # 使用 creationflags 而不是 startupinfo 来避免阻止 GUI 对话框
+        creationflags = 0
         if os.name == 'nt':
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            # CREATE_NO_WINDOW 标志允许 GUI 对话框正常显示
+            creationflags = subprocess.CREATE_NO_WINDOW
             
         result = subprocess.run(
-            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script], 
+            ["powershell", "-sta", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script], 
             capture_output=True, 
             text=True,
             encoding='utf-8',
-            startupinfo=startupinfo,
-            timeout=60
+            creationflags=creationflags,
+            timeout=120
         )
         
         # 从输出中提取路径
@@ -600,29 +659,31 @@ def select_file(title: str = "选择文件", filetypes: str = "所有文件 (*.*
         
         # 使用 PowerShell 脚本打开文件选择对话框
         # filetypes 格式: "JSON文件 (*.json)|*.json|所有文件 (*.*)|*.*"
+        # 使用 -sta 参数确保在单线程单元模式下运行
         ps_script = f"""
         Add-Type -AssemblyName System.Windows.Forms
+        [System.Windows.Forms.Application]::EnableVisualStyles()
         $f = New-Object System.Windows.Forms.OpenFileDialog
         $f.Title = "{title}"
         $f.Filter = "{filetypes}"
-        if ($f.ShowDialog() -eq "OK") {{
+        $result = $f.ShowDialog()
+        if ($result -eq [System.Windows.Forms.DialogResult]::OK) {{
             Write-Host "__RESULT__:$($f.FileName)"
         }}
         """
         
-        # Windows下隐藏控制台窗口
-        startupinfo = None
+        # 使用 creationflags 而不是 startupinfo 来避免阻止 GUI 对话框
+        creationflags = 0
         if os.name == 'nt':
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            creationflags = subprocess.CREATE_NO_WINDOW
             
         result = subprocess.run(
-            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script], 
+            ["powershell", "-sta", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_script], 
             capture_output=True, 
             text=True,
             encoding='utf-8',
-            startupinfo=startupinfo,
-            timeout=60
+            creationflags=creationflags,
+            timeout=120
         )
         
         # 从输出中提取路径

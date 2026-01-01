@@ -29,6 +29,13 @@ export const bankApi = {
   update: (id, data) => api.put(`/banks/${id}`, data),
   delete: (id) => api.delete(`/banks/${id}`),
 
+  // 章节相关
+  getChapters: (bankId) => api.get(`/banks/${bankId}/chapters`),
+  addChapter: (bankId, chapter) =>
+    api.post(`/banks/${bankId}/chapters`, { chapter }),
+  deleteChapter: (bankId, chapter) =>
+    api.delete(`/banks/${bankId}/chapters/${encodeURIComponent(chapter)}`),
+
   // 题目相关
   getQuestions: (bankId) => api.get(`/banks/${bankId}/questions`),
   addQuestion: (bankId, data) => api.post(`/banks/${bankId}/questions`, data),
@@ -113,6 +120,62 @@ export const systemApi = {
   checkUpdate: () => api.get("/system/check-update"),
   selectFolder: () => api.get("/system/select-folder"),
   selectFile: (params) => api.get("/system/select-file", { params }),
+};
+
+// ============ 题库商城 API (云端) ============
+// 配置云端服务器地址，生产环境应改为实际服务器地址
+const MARKET_BASE_URL =
+  import.meta.env.VITE_MARKET_API_URL || "https://your-server.com/api/market";
+
+const marketInstance = axios.create({
+  baseURL: MARKET_BASE_URL,
+  timeout: 30000,
+});
+
+export const marketApi = {
+  // 获取商城题库列表
+  getBanks: (params) =>
+    marketInstance.get("/banks", { params }).then((r) => r.data),
+
+  // 获取单个题库详情
+  getBank: (id) => marketInstance.get(`/banks/${id}`).then((r) => r.data),
+
+  // 预览题库 (部分题目)
+  previewBank: (id, limit = 5) =>
+    marketInstance
+      .get(`/banks/${id}/preview`, { params: { limit } })
+      .then((r) => r.data),
+
+  // 下载题库文件
+  downloadBank: async (id) => {
+    const response = await marketInstance.get(`/banks/${id}/download`, {
+      responseType: "blob",
+    });
+    return response.data;
+  },
+
+  // 搜索题库
+  search: (q, params = {}) =>
+    marketInstance
+      .get("/search", { params: { q, ...params } })
+      .then((r) => r.data),
+
+  // 获取分类列表
+  getCategories: () => marketInstance.get("/categories").then((r) => r.data),
+
+  // 获取科目列表
+  getSubjects: () => marketInstance.get("/subjects").then((r) => r.data),
+
+  // 上传题库 (如有权限)
+  uploadBank: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return marketInstance
+      .post("/banks", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((r) => r.data);
+  },
 };
 
 export default api;

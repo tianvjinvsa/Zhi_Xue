@@ -697,9 +697,12 @@ onMounted(async () => {
     
     // 自动检查一次连接状态
     if (aiConfig.value.apiBaseUrl) {
-      // 如果有配置，尝试静默测试
+      // 使用已保存的配置进行静默测试
       try {
-        const res = await aiApi.checkConnection()
+        const res = await aiApi.checkConnection({
+          api_base_url: aiConfig.value.apiBaseUrl,
+          model: aiConfig.value.model
+        })
         connectionStatus.value = res.success
       } catch (e) {
         connectionStatus.value = false

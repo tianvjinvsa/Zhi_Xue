@@ -5,3 +5,8 @@ __pycache__/
 
 dist/
 build/
+
+web/frontend/views/MarketView.vue
+web/frontend/views/NativeMarketView.vue
+
+server/

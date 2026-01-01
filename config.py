@@ -42,8 +42,9 @@ class AIConfig:
     api_base_url: str = ""
     model: str = "gpt-4o-mini"
     vision_model: str = "gpt-4o"
-    max_tokens: int = 4096
+    max_tokens: int = 0  # 0表示不限制
     temperature: float = 0.3
+    thinking_time: int = 0  # 思考时间限制(秒)，0表示不限制
 
 
 @dataclass

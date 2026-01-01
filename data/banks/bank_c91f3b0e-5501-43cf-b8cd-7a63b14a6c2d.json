@@ -1,0 +1,29 @@
+{
+  "id": "c91f3b0e-5501-43cf-b8cd-7a63b14a6c2d",
+  "name": "测试",
+  "description": "",
+  "subject": "",
+  "questions": [
+    {
+      "id": "3d047a04-eaf4-4515-8be7-c38be8e94935",
+      "type": "single",
+      "question": "测试题目",
+      "options": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "answer": "A",
+      "explanation": "无",
+      "difficulty": 5,
+      "tags": [],
+      "chapter": "",
+      "created_at": "2026-01-01 11:55:07",
+      "updated_at": "2026-01-01 11:55:07",
+      "source": "manual"
+    }
+  ],
+  "created_at": "2026-01-01 11:54:31",
+  "updated_at": "2026-01-01 11:55:32"
+}

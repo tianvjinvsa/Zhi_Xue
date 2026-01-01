@@ -7,9 +7,14 @@
         </el-button>
         <h1><el-icon><Folder /></el-icon>{{ bank?.name || '加载中...' }}</h1>
       </div>
-      <el-button type="primary" @click="showAddDialog">
-        <el-icon><Plus /></el-icon>添加题目
-      </el-button>
+      <div class="header-right">
+        <el-button @click="showChapterDialog">
+          <el-icon><FolderAdd /></el-icon>管理章节
+        </el-button>
+        <el-button type="primary" @click="showAddDialog">
+          <el-icon><Plus /></el-icon>添加题目
+        </el-button>
+      </div>
     </div>
 
     <!-- 题库统计 -->
@@ -52,6 +57,10 @@
         <el-select v-model="filterDifficulty" placeholder="难度" clearable style="width: 100px">
           <el-option v-for="i in 5" :key="i" :label="`${i}星`" :value="i" />
         </el-select>
+        <el-select v-model="filterChapter" placeholder="章节" clearable style="width: 150px">
+          <el-option label="未分类" value="__uncategorized__" />
+          <el-option v-for="chapter in chapters" :key="chapter" :label="chapter" :value="chapter" />
+        </el-select>
         <el-input 
           v-model="searchKeyword" 
           placeholder="搜索题目内容..."
@@ -75,6 +84,9 @@
               <span class="question-number">{{ index + 1 }}</span>
               <el-tag :class="['question-type-tag', question.type]" size="small">
                 {{ getTypeLabel(question.type) }}
+              </el-tag>
+              <el-tag v-if="question.chapter" type="info" size="small">
+                {{ question.chapter }}
               </el-tag>
               <div class="difficulty-stars">
                 <el-icon v-for="i in question.difficulty" :key="i"><Star /></el-icon>
@@ -226,6 +238,19 @@
           <el-rate v-model="questionForm.difficulty" :max="5" />
         </el-form-item>
         
+        <el-form-item label="章节">
+          <el-select
+            v-model="questionForm.chapter"
+            placeholder="请选择章节（可选）"
+            style="width: 100%"
+            clearable
+            filterable
+            allow-create
+          >
+            <el-option v-for="chapter in chapters" :key="chapter" :label="chapter" :value="chapter" />
+          </el-select>
+        </el-form-item>
+        
         <el-form-item label="解析">
           <el-input 
             v-model="questionForm.explanation" 
@@ -242,14 +267,43 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 章节管理对话框 -->
+    <el-dialog v-model="chapterDialogVisible" title="管理章节" width="500px">
+      <div class="chapter-manager">
+        <div class="add-chapter-row">
+          <el-input 
+            v-model="newChapterName" 
+            placeholder="输入章节名称" 
+            @keyup.enter="addChapter"
+            style="flex: 1"
+          />
+          <el-button type="primary" @click="addChapter" :disabled="!newChapterName.trim()">
+            添加
+          </el-button>
+        </div>
+        <el-divider />
+        <div class="chapter-list">
+          <div v-if="chapters.length === 0" class="empty-chapters">
+            暂无章节，请添加
+          </div>
+          <div v-for="chapter in chapters" :key="chapter" class="chapter-item">
+            <span>{{ chapter }}</span>
+            <el-button type="danger" link @click="deleteChapter(chapter)">
+              <el-icon><Delete /></el-icon>
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Delete, Plus, Star, Search } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Delete, Plus, Star, Search, FolderAdd } from '@element-plus/icons-vue'
 import { bankApi, favoriteApi } from '@/api'
 
 const route = useRoute()
@@ -264,10 +318,16 @@ const editingId = ref(null)
 const submitting = ref(false)
 const questionFormRef = ref(null)
 
+// 章节管理
+const chapterDialogVisible = ref(false)
+const newChapterName = ref('')
+
 const filterType = ref('')
 const filterDifficulty = ref('')
+const filterChapter = ref('')
 const searchKeyword = ref('')
 const favoriteStatus = ref({})
+const chapters = ref([])
 
 const questionForm = ref({
   type: 'single',
@@ -277,6 +337,7 @@ const questionForm = ref({
   answerArray: [],
   answerBool: true,
   difficulty: 3,
+  chapter: '',
   explanation: ''
 })
 
@@ -292,6 +353,13 @@ const filteredQuestions = computed(() => {
   return questions.value.filter(q => {
     if (filterType.value && q.type !== filterType.value) return false
     if (filterDifficulty.value && q.difficulty !== filterDifficulty.value) return false
+    if (filterChapter.value) {
+      if (filterChapter.value === '__uncategorized__') {
+        if (q.chapter) return false
+      } else {
+        if (q.chapter !== filterChapter.value) return false
+      }
+    }
     if (searchKeyword.value && !q.question.includes(searchKeyword.value)) return false
     return true
   })
@@ -322,12 +390,75 @@ const fetchBank = async () => {
   try {
     bank.value = await bankApi.get(bankId)
     questions.value = await bankApi.getQuestions(bankId)
+    // 更新章节列表
+    await fetchChapters()
     // 检查收藏状态
     await checkFavoriteStatus()
   } catch (error) {
     console.error('获取题库失败:', error)
   } finally {
     loading.value = false
+  }
+}
+
+// 获取章节列表（从后端）
+const fetchChapters = async () => {
+  try {
+    const result = await bankApi.getChapters(bankId)
+    chapters.value = result.chapters || []
+  } catch (error) {
+    // 从题目中提取章节作为后备
+    updateChaptersFromQuestions()
+  }
+}
+
+// 从题目中提取章节
+const updateChaptersFromQuestions = () => {
+  const chapterSet = new Set()
+  for (const q of questions.value) {
+    if (q.chapter) {
+      chapterSet.add(q.chapter)
+    }
+  }
+  chapters.value = Array.from(chapterSet).sort()
+}
+
+// 章节自动补全
+const queryChapters = (queryString, cb) => {
+  const results = queryString
+    ? chapters.value.filter(c => c.toLowerCase().includes(queryString.toLowerCase())).map(c => ({ value: c }))
+    : chapters.value.map(c => ({ value: c }))
+  cb(results)
+}
+
+// 章节管理相关方法
+const showChapterDialog = () => {
+  newChapterName.value = ''
+  chapterDialogVisible.value = true
+}
+
+const addChapter = async () => {
+  if (!newChapterName.value.trim()) return
+  try {
+    await bankApi.addChapter(bankId, newChapterName.value.trim())
+    ElMessage.success('章节添加成功')
+    newChapterName.value = ''
+    await fetchChapters()
+  } catch (error) {
+    ElMessage.error('添加失败：' + (error.response?.data?.detail || '章节已存在'))
+  }
+}
+
+const deleteChapter = async (chapter) => {
+  try {
+    await ElMessageBox.confirm(`确定删除章节"${chapter}"吗？这不会删除该章节下的题目。`, '确认删除', { type: 'warning' })
+    await bankApi.deleteChapter(bankId, chapter)
+    ElMessage.success('章节删除成功')
+    await fetchChapters()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败')
+    }
   }
 }
 
@@ -369,6 +500,7 @@ const showAddDialog = () => {
     answerArray: [],
     answerBool: true,
     difficulty: 3,
+    chapter: '',
     explanation: ''
   }
   dialogVisible.value = true
@@ -385,6 +517,7 @@ const showEditDialog = (question) => {
     answerArray: Array.isArray(question.answer) ? [...question.answer] : [],
     answerBool: typeof question.answer === 'boolean' ? question.answer : true,
     difficulty: question.difficulty,
+    chapter: question.chapter || '',
     explanation: question.explanation || ''
   }
   dialogVisible.value = true
@@ -416,6 +549,7 @@ const submitQuestion = async () => {
         ? questionForm.value.options.filter(o => o.trim())
         : [],
       difficulty: questionForm.value.difficulty,
+      chapter: questionForm.value.chapter,
       explanation: questionForm.value.explanation
     }
     
